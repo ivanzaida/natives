@@ -2,7 +2,7 @@ import { log } from "console";
 import { mkdir, readdir, readFile, rmdir, writeFile } from "fs/promises";
 import path from "path";
 import { Node, parseMarkdown } from "../parser/parse-md";
-import { camelCase } from "change-case";
+import { camelCase, kebabCase } from "change-case";
 import { resolveType, TTypeInfo } from "../store";
 
 class Native {
@@ -136,14 +136,25 @@ export class FunctionsGenerator {
             this._natives.get(native.namespace)?.push(native);
         }))
 
+        const folders: string[] = []
         await Promise.all(Array.from(this._natives.entries()).map(async ([namespace, natives]) => {
-            const namespaceFolder = path.join(outFolder, namespace);
+            const folder =kebabCase(namespace);
+            const namespaceFolder = path.join(outFolder, folder);
             await mkdir(namespaceFolder).catch(() => { });
+            const fileNames: string[] = [];
             for (const native of natives) {
-                const file = path.join(namespaceFolder, `${native.name}.ts`);
+                const fileName = kebabCase(native.name);
+                const file = path.join(namespaceFolder, fileName + '.ts');
                 await writeFile(file, native.build());
+                fileNames.push(fileName);
             }
+            const indexFile = path.join(namespaceFolder, 'index.ts');
+            await writeFile(indexFile, fileNames.map(name => `export * from './${name}';`).join('\n'));
+            folders.push(folder);
         }));
+
+        const indexFile = path.join(outFolder, 'index.ts');
+        await writeFile(indexFile, folders.map(folder => `export * from './${folder}';`).join('\n'));
     }
 
     private parseName(node: Node, native: Native): void {

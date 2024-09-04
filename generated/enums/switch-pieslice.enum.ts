@@ -1,6 +1,0 @@
-export enum ESwitchPieslice {
-	PIESLICE_TOP,
-	PIESLICE_RIGHT,
-	PIESLICE_BOTTOM,
-	PIESLICE_LEFT,
-}

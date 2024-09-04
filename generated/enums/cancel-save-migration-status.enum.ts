@@ -1,7 +1,0 @@
-export enum ECancelSaveMigrationStatus {
-	CSMS_NONE,
-	CSMS_PENDING,
-	CSMS_FAILED,
-	CSMS_SUCCEDDED,
-	CSMS_CANCELED,
-}

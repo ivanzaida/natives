@@ -1,5 +1,0 @@
-export enum EAdvanceToTargetFlags {
-	ATTF_DISABLE_AUTO_CROUCHING = 1,
-	ATTF_DISABLE_HAND_SIGNALS,
-	ATTF_DEFAULT = 0,
-}

@@ -1,6 +1,0 @@
-export enum EMeleeCombos {
-	MCOMBO_UNARMED_1 = 4,
-	MCOMBO_UNARMED_2,
-	MCOMBO_UNARMED_3,
-	MCOMBO_UNARMED_4,
-}

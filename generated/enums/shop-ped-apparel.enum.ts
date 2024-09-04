@@ -1,5 +1,0 @@
-export enum EShopPedApparel {
-	SHOP_PED_COMPONENT,
-	SHOP_PED_PROP,
-	SHOP_PED_OUTFIT,
-}

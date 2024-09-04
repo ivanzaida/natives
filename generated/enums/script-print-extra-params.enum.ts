@@ -1,4 +1,0 @@
-export enum EScriptPrintExtraParams {
-	SCRIPT_PRINT_NO_EXTRA_PARAMS,
-	SCRIPT_PRINT_ONE_SUBSTRING,
-}

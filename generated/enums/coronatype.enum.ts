@@ -1,5 +1,0 @@
-export enum ECoronatype {
-	CORONATYPE_SHINYSTAR,
-	CORONATYPE_MOON,
-	CORONATYPE_NONE,
-}

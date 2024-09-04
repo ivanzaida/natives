@@ -1,4 +1,0 @@
-export enum ELbGroups {
-	LB_GROUP_BANK_ID = 6083,
-	LB_GROUP_TERRITORY_ID,
-}

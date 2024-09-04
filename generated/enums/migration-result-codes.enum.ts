@@ -1,5 +1,0 @@
-export enum EMigrationResultCodes {
-	MIGRATION_NONE,
-	MIGRATION_ALREADY_DONE,
-	MIGRATION_NOT_AVAILABLE,
-}

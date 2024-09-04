@@ -1,5 +1,0 @@
-export enum EPlayerSource {
-	SOURCE_NORMAL,
-	SOURCE_TRANSITION,
-	SOURCE_STORE,
-}

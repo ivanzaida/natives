@@ -1,5 +1,0 @@
-export enum ECoverpointHeight {
-	COVHEIGHT_LOW,
-	COVHEIGHT_HIGH,
-	COVHEIGHT_TOOHIGH,
-}

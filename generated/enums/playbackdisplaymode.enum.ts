@@ -1,7 +1,0 @@
-export enum EPlaybackdisplaymode {
-	RDM_NONE,
-	RDM_WHOLELINE,
-	RDM_JUSTINFRONT,
-	RDM_JUSTBEHIND,
-	RDM_AROUNDVEHICLE,
-}

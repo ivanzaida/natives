@@ -1,7 +1,0 @@
-export enum EPedParachuteState {
-	PPS_INVALID = -1,
-	PPS_SKYDIVING,
-	PPS_DEPLOYING,
-	PPS_PARACHUTING,
-	PPS_LANDING,
-}

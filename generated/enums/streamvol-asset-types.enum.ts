@@ -1,5 +1,0 @@
-export enum EStreamvolAssetTypes {
-	FLAG_COLLISIONS_MOVER = 1,
-	FLAG_COLLISIONS_WEAPON,
-	FLAG_MAPDATA = 12,
-}

@@ -1,5 +1,0 @@
-export enum EPlayerTargetLevel {
-	PTL_TARGET_EVERYONE,
-	PTL_TARGET_STRANGERS,
-	PTL_TARGET_ATTACKERS,
-}

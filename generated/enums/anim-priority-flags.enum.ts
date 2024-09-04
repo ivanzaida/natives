@@ -1,5 +1,0 @@
-export enum EAnimPriorityFlags {
-	AF_PRIORITY_LOW,
-	AF_PRIORITY_MEDIUM,
-	AF_PRIORITY_HIGH,
-}

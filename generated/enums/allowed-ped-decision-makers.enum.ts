@@ -1,6 +1,0 @@
-export enum EAllowedPedDecisionMakers {
-	DM_PED_MISSION_EMPTY,
-	DM_PED_MISSION_NORM,
-	DM_PED_MISSION_TOUGH,
-	DM_PED_MISSION_WEAK,
-}

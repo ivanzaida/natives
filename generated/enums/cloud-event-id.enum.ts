@@ -1,4 +1,0 @@
-export enum ECloudEventId {
-	CLOUD_EVENT_TUNABLES_ADDED,
-	CLOUD_EVENT_BGSCRIPT_ADDED,
-}

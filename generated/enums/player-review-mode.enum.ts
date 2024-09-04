@@ -1,4 +1,0 @@
-export enum EPlayerReviewMode {
-	PLAYER_REVIEW_ALL_PLAYERS,
-	PLAYER_REVIEW_TEAM_ONLY,
-}

@@ -1,9 +1,0 @@
-export enum EWheelHydraulicScriptState {
-	HS_WHEEL_FREE,
-	HS_WHEEL_LOCKED,
-	HS_WHEEL_BOUNCE,
-	HS_ALL_FREE,
-	HS_ALL_LOCK_UP,
-	HS_ALL_LOCK_DOWN,
-	HS_ALL_BOUNCE,
-}

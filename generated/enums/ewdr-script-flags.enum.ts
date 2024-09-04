@@ -1,4 +1,0 @@
-export enum EEwdrScriptFlags {
-	EWDR_DEFAULT,
-	EWDR_KEEP_MOVING_WHILST_WAITING_FOR_FIRST_PATH,
-}

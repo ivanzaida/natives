@@ -1,8 +1,0 @@
-export enum ETransportMode {
-	TM_ANY_2D,
-	TM_ANY_3D,
-	TM_ON_FOOT_2D,
-	TM_ON_FOOT_3D,
-	TM_IN_VEHICLE_2D,
-	TM_IN_VEHICLE_3D,
-}

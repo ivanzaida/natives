@@ -1,4 +1,0 @@
-export enum EUdsUpdateMode {
-	UDS_UPDATE_MODE_FULL,
-	UDS_UPDATE_MODE_DELTA,
-}

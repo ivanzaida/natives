@@ -1,4 +1,0 @@
-export enum EEgotoEntityFlags {
-	EGOTO_ENTITY_DEFAULT,
-	EGOTO_ENTITY_NEVER_SLOW_FOR_PATH_LENGTH,
-}

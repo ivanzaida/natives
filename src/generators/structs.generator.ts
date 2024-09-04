@@ -247,7 +247,7 @@ export class StructsGenerator extends Generator {
 
             const typeName = size > 1 ? `${resolved.name}[]` : resolved.name;
 
-            buffer.push(`\tpublic readonly ${name}: ${typeName};`);
+            buffer.push(`\tpublic ${name}: ${typeName};`);
         }
 
         if (Object.keys(imports).length > 0) {
@@ -279,10 +279,12 @@ export class StructsGenerator extends Generator {
 
 
         buffer.push(``);
-        buffer.push(`\tconstructor(view: DataView) {`);
+        buffer.push(`\tpublic static parse(view: DataView): ${runtimeName} {`);
         buffer.push(`\t\tif (view.byteLength !== ${size}) {`);
         buffer.push(`\t\t\tthrow new Error('Invalid view size');`);
         buffer.push(`\t\t}`);
+
+        buffer.push(`\t\tconst instance = new ${runtimeName}();`);
 
         let offset = 0;
         fields.forEach((field, index) => {
@@ -303,9 +305,13 @@ export class StructsGenerator extends Generator {
                     throw new Error(`No struct info for ${type}`);
                 }
                 if (size === 1) {
-                    buffer.push(`\t\tthis.${names[index]} = new ${structInfo}(new DataView(view.buffer.slice(${offset}, ${dataSize + offset})));`);
+                    buffer.push(`\t\tinstance.${names[index]} = ${structInfo}.parse(new DataView(view.buffer.slice(${offset}, ${dataSize + offset})));`);
                 } else {
-                    log(`Injecting struct ${structInfo} into ${runtimeName}`);
+                    const fields: string[] = [];
+                    for (let i = 0; i < size; i++) {
+                        fields.push(`${structInfo}.parse(new DataView(view.buffer.slice(${offset + (fieldSize * i)})))`);
+                    }
+                    buffer.push(`\t\tinstance.${names[index]} = [${fields.join(', ')}];`);
                 }
             } else {
                 const method = viewMethods.get(type);
@@ -315,13 +321,13 @@ export class StructsGenerator extends Generator {
                 }
 
                 if (size === 1) {
-                    buffer.push(`\t\tthis.${names[index]} = ${method(offset)};`);
+                    buffer.push(`\t\tinstance.${names[index]} = ${method(offset)};`);
                 } else {
                     const fields: string[] = [];
                     for (let i = 0; i < size; i++) {
                         fields.push(`${method(offset + (fieldSize * i))}`);
                     }
-                    buffer.push(`\t\tthis.${names[index]} = [${fields.join(', ')}];`);
+                    buffer.push(`\t\tinstance.${names[index]} = [${fields.join(', ')}];`);
                 }
 
             }
@@ -329,6 +335,7 @@ export class StructsGenerator extends Generator {
             offset += dataSize;
         });
 
+        buffer.push(`\t\treturn instance;`)
         buffer.push(`\t}`)
         buffer.push(``);
         buffer.push(`\tpublic static get dataView(): DataView {`);

@@ -1,7 +1,0 @@
-export enum EPedBloodDamageType {
-	BDT_BULLET_SMALL,
-	BDT_BULLET_LARGE,
-	BDT_SHOTGUN_SMALL,
-	BDT_SHOTGUN_LARGE,
-	BDT_STAB,
-}

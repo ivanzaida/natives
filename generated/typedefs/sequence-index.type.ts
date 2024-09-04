@@ -1,1 +1,0 @@
-export type TSequenceIndex = number;

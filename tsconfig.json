@@ -8,5 +8,5 @@
     "skipLibCheck": true,
     "strictPropertyInitialization": false
   },
-  "include": ["generated"]
+  "include": ["generated/**/*.ts"],
 }

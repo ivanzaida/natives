@@ -14,8 +14,6 @@ type TField = {
     size: number;
 }
 
-
-
 const sizeCache = new Map<string, number>([
     ['BOOL', 8],
     ['FLOAT', 8],
@@ -279,16 +277,15 @@ export class StructsGenerator extends Generator {
 
 
         buffer.push(``);
-        buffer.push(`\tpublic static parse(view: DataView): ${runtimeName} {`);
+        buffer.push(`\tpublic read(view: DataView): ${runtimeName} {`);
         buffer.push(`\t\tif (view.byteLength !== ${size}) {`);
         buffer.push(`\t\t\tthrow new Error('Invalid view size');`);
         buffer.push(`\t\t}`);
 
-        buffer.push(`\t\tconst instance = new ${runtimeName}();`);
-
         let offset = 0;
+        names.length = 0;
         fields.forEach((field, index) => {
-            let [, type, size] = this.parseField(field);
+            let [name, type, size] = this.parseField(field);
             const fieldSize = sizeCache.get(type)!;
             const dataSize = fieldSize * size;
 
@@ -299,19 +296,27 @@ export class StructsGenerator extends Generator {
                 type = typedefs.get(type)!;
             }
 
+            if (names.includes(name)) {
+                const count = names.filter(x => x === name).length;
+                names.push(name);
+                name = `${name}_${count + 1}`;
+            } else {
+                names.push(name);
+            }
+
             if (structs.has(type)) {
                 const structInfo = types[type].name;
                 if (!structInfo) {
                     throw new Error(`No struct info for ${type}`);
                 }
                 if (size === 1) {
-                    buffer.push(`\t\tinstance.${names[index]} = ${structInfo}.parse(new DataView(view.buffer.slice(${offset}, ${dataSize + offset})));`);
+                    buffer.push(`\t\tthis.${name} = new ${structInfo}().read(new DataView(view.buffer.slice(${offset}, ${dataSize + offset})));`);
                 } else {
                     const fields: string[] = [];
                     for (let i = 0; i < size; i++) {
-                        fields.push(`${structInfo}.parse(new DataView(view.buffer.slice(${offset + (fieldSize * i)})))`);
+                        fields.push(`new ${structInfo}().read(new DataView(view.buffer.slice(${offset + (fieldSize * i)})))`);
                     }
-                    buffer.push(`\t\tinstance.${names[index]} = [${fields.join(', ')}];`);
+                    buffer.push(`\t\tthis.${name} = [${fields.join(', ')}];`);
                 }
             } else {
                 const method = viewMethods.get(type);
@@ -321,13 +326,13 @@ export class StructsGenerator extends Generator {
                 }
 
                 if (size === 1) {
-                    buffer.push(`\t\tinstance.${names[index]} = ${method(offset)};`);
+                    buffer.push(`\t\tthis.${name} = ${method(offset)};`);
                 } else {
                     const fields: string[] = [];
                     for (let i = 0; i < size; i++) {
                         fields.push(`${method(offset + (fieldSize * i))}`);
                     }
-                    buffer.push(`\t\tinstance.${names[index]} = [${fields.join(', ')}];`);
+                    buffer.push(`\t\tthis.${name} = [${fields.join(', ')}];`);
                 }
 
             }
@@ -335,7 +340,7 @@ export class StructsGenerator extends Generator {
             offset += dataSize;
         });
 
-        buffer.push(`\t\treturn instance;`)
+        buffer.push(`\t\treturn this;`)
         buffer.push(`\t}`)
         buffer.push(``);
         buffer.push(`\tpublic static get dataView(): DataView {`);

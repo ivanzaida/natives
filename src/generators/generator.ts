@@ -1,9 +1,7 @@
 import path from 'path';
 import { Node, parseMarkdown } from '../parser/parse-md'
 import { mkdir, readdir, readFile, rmdir, writeFile } from 'fs/promises';
-import { kebabCase } from 'change-case';
 import { types } from '../store';
-import { log } from 'console';
 
 export type TParsedNames = { nativeName: string, runtimeName: string, fileName: string }
 

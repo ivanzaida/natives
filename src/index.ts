@@ -3,6 +3,7 @@ import { EnumsGenerator } from "./generators/enums.generator";
 import { TypedefsGenerator } from "./generators/typedefs.generator";
 import { StructsGenerator } from "./generators/structs.generator";
 import path from "path";
+import { FunctionsGenerator } from "./generators/functions.generator";
 
 const noop = () => { }
 
@@ -16,6 +17,8 @@ const main = async () => {
     await typedefsGenerator.generate();
     const structsGenerator = new StructsGenerator('structs');
     await structsGenerator.generate();
+    const functionsGenerator = new FunctionsGenerator('functions');
+    await functionsGenerator.generate();
 }
 
 main()

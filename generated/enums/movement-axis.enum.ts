@@ -1,0 +1,8 @@
+export enum EMovementAxis {
+	MOVE_POSX,
+	MOVE_NEGX,
+	MOVE_POSY,
+	MOVE_NEGY,
+	MOVE_POSZ,
+	MOVE_NEGZ,
+}

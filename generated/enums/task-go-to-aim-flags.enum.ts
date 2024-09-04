@@ -1,0 +1,4 @@
+export enum ETaskGoToAimFlags {
+	GO_TO_AIM_NONE,
+	GO_TO_AIM_AT_GOTO_COORD_IF_TARGET_LOS_BLOCKED,
+}

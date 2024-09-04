@@ -1,0 +1,6 @@
+export enum EAnimType {
+	ANIM_SCRIPT = 1,
+	ANIM_SYNCED_SCENE,
+	ANIM_CODE = 4,
+	ANIM_DEFAULT = 3,
+}

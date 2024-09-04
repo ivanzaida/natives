@@ -1,0 +1,5 @@
+export enum EControlType {
+	PLAYER_CONTROL,
+	CAMERA_CONTROL,
+	FRONTEND_CONTROL,
+}

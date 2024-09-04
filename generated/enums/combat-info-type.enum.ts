@@ -1,0 +1,5 @@
+export enum ECombatInfoType {
+	CI_DEFAULT = -455129387,
+	CI_GRUNT = 1805487359,
+	CI_CAPTAIN = -384210918,
+}

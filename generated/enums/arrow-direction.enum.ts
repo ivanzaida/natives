@@ -1,0 +1,6 @@
+export enum EArrowDirection {
+	HELP_TEXT_NORTH = 1,
+	HELP_TEXT_EAST,
+	HELP_TEXT_SOUTH,
+	HELP_TEXT_WEST,
+}

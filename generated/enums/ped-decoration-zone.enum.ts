@@ -1,0 +1,10 @@
+export enum EPedDecorationZone {
+	PDZ_TORSO,
+	PDZ_HEAD,
+	PDZ_LEFT_ARM,
+	PDZ_RIGHT_ARM,
+	PDZ_LEFT_LEG,
+	PDZ_RIGHT_LEG,
+	PDZ_MEDALS,
+	PDZ_INVALID,
+}

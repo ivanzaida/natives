@@ -1,0 +1,3 @@
+[submodule "native-db"]
+	path = native-db
+	url = git@github.com:vhub-team/native-db.git

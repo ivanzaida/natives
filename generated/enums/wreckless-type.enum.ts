@@ -1,0 +1,5 @@
+export enum EWrecklessType {
+	WT_ON_PAVEMENT,
+	WT_RAN_RED_LIGHT,
+	WT_DROVE_AGAINST_TRAFFIC,
+}

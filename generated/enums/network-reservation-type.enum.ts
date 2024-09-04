@@ -1,0 +1,5 @@
+export enum ENetworkReservationType {
+	RESERVATION_ALL,
+	RESERVATION_LOCAL_ONLY,
+	RESERVATION_GLOBAL_ONLY,
+}

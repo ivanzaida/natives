@@ -1,0 +1,7 @@
+export enum ELandingGearCommand {
+	LGC_DEPLOY,
+	LGC_RETRACT,
+	LGC_DEPLOY_INSTANT,
+	LGC_RETRACT_INSTANT,
+	LGC_BREAK,
+}

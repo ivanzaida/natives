@@ -1,0 +1,5 @@
+export enum EUgcBoolOption {
+	OPTION_NOT_SPECIFIED,
+	OPTION_TRUE,
+	OPTION_FALSE,
+}

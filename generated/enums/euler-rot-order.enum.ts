@@ -1,0 +1,8 @@
+export enum EEulerRotOrder {
+	EULER_XYZ,
+	EULER_XZY,
+	EULER_YXZ,
+	EULER_YZX,
+	EULER_ZXY,
+	EULER_ZYX,
+}

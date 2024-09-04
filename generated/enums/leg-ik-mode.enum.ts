@@ -1,0 +1,6 @@
+export enum ELegIkMode {
+	LEG_IK_OFF,
+	LEG_IK_PARTIAL,
+	LEG_IK_FULL,
+	LEG_IK_FULL_MELEE,
+}

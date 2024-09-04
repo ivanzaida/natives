@@ -1,0 +1,1 @@
+export type TTextWidgetId = number;

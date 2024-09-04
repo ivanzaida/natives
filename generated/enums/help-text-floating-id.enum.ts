@@ -1,0 +1,5 @@
+export enum EHelpTextFloatingId {
+	FLOATING_HELP_TEXT_ID_1,
+	FLOATING_HELP_TEXT_ID_2,
+	MAX_FLOATING_HELP_TEXT_IDS,
+}

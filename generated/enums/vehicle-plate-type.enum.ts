@@ -1,0 +1,6 @@
+export enum EVehiclePlateType {
+	VPT_FRONT_AND_BACK_PLATES,
+	VPT_FRONT_PLATES,
+	VPT_BACK_PLATES,
+	VPT_NONE,
+}

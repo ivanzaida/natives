@@ -1,0 +1,5 @@
+export enum EStreamvolLodFlags {
+	STREAMVOL_LOD_FLAG_HIGH = 33,
+	STREAMVOL_LOD_FLAG_LOW = 94,
+	STREAMVOL_LOD_FLAG_ALL = 127,
+}

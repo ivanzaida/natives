@@ -1,0 +1,6 @@
+export enum EHeadBlendHeadType {
+	HBHT_MALE,
+	HBHT_FEMALE,
+	HBHT_UNIQUE_MALE,
+	HBHT_UNIQUE_FEMALE,
+}

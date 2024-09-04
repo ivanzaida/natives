@@ -1,0 +1,4 @@
+export enum EStealthAttribute {
+	SA_TREATED_AS_ACTING_SUSPCIOUSLY = 1,
+	SA_GENERATES_FOOTSTEP_EVENTS,
+}

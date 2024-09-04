@@ -1,0 +1,6 @@
+export enum ENeonId {
+	NEON_LEFT,
+	NEON_RIGHT,
+	NEON_FRONT,
+	NEON_BACK,
+}

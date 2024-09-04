@@ -1,0 +1,4 @@
+export enum ESearchLocationFlags {
+	SEARCH_LOCATION_EXTERIORS = 1,
+	SEARCH_LOCATION_INTERIORS,
+}

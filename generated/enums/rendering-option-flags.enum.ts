@@ -1,0 +1,4 @@
+export enum ERenderingOptionFlags {
+	RO_NO_OPTIONS,
+	RO_STOP_RENDERING_OPTION_WHEN_PLAYER_EXITS_INTO_COVER,
+}

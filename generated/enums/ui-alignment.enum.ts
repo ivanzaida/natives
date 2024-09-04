@@ -1,0 +1,7 @@
+export enum EUiAlignment {
+	UI_ALIGN_LEFT = 76,
+	UI_ALIGN_RIGHT = 82,
+	UI_ALIGN_TOP = 84,
+	UI_ALIGN_BOTTOM = 66,
+	UI_ALIGN_IGNORE = 73,
+}

@@ -1,0 +1,4 @@
+export enum ECloudOnlineService {
+	RL_CLOUD_ONLINE_SERVICE_NATIVE,
+	RL_CLOUD_ONLINE_SERVICE_SC,
+}

@@ -1,0 +1,5 @@
+export enum EGpsSlotType {
+	GPS_SLOT_WAYPOINT,
+	GPS_SLOT_RADAR_BLIP,
+	GPS_SLOT_DISCRETE,
+}

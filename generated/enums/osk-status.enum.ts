@@ -1,0 +1,7 @@
+export enum EOskStatus {
+	OSK_INVALID = -1,
+	OSK_PENDING,
+	OSK_SUCCESS,
+	OSK_CANCELLED,
+	OSK_FAILED,
+}

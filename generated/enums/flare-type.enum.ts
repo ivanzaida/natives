@@ -1,0 +1,5 @@
+export enum EFlareType {
+	FT_WARNING,
+	FT_LIGHT_TARGET,
+	FT_ATTACK_TARGET,
+}

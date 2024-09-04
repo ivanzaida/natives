@@ -1,0 +1,6 @@
+export enum EInviteRemoveReason {
+	REMOVE_TIMED_OUT,
+	REMOVE_OLDEST,
+	REMOVE_CANCELLED,
+	REMOVE_ACCEPTED,
+}

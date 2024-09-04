@@ -1,0 +1,5 @@
+export enum EFeedReplayType {
+	REPLAY_RECORDING,
+	REPLAY_BUTTON,
+	ACTION_REPLAY,
+}

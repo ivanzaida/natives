@@ -4,118 +4,43 @@ import path from "path";
 import { Node, parseMarkdown } from "../parser/parse-md";
 import { camelCase, kebabCase } from "change-case";
 import { resolveType, TTypeInfo } from "../store";
-
-class Native {
-    public returnType: TTypeInfo;
-    public name: string;
-    public namespace: string;
-    public parameters: { type: TTypeInfo, name: string, isPointer: boolean, defaultValue?: string }[] = [];
-    public hash: string;
-
-    public build(): string {
-
-        const imports = this.getImports();
-
-        const buffer: string[] = []
-
-        if (imports.length) {
-            buffer.push(...imports);
-            buffer.push('');
-        }
+import { Native } from "../models/native";
 
 
-        this.buildSignature(buffer);
+function removeInvalidChars(str: string): string {
+    if (!str) {
+        return '';
+    } 
+    return str.replace(/[:;.,!?]/g, '');
+}
 
-        return buffer.join('\n');
+const reserved = new Set<string>([
+    "true",
+    "default"
+])
+
+function replaceReserved(name: string): string {
+    if (reserved.has(name)) {
+        return '_' +name;
     }
 
-    private getImports(): string[] {
-        const types = this.parameters.map(param => param.type).concat(this.returnType);
-        const imports = types.filter(type => type.folder)
-        const byFolder = new Map<string, string[]>();
-        imports.forEach(type => {
-            if (!byFolder.has(type.folder!)) {
-                byFolder.set(type.folder!, []);
-            }
-            byFolder.get(type.folder!)?.push(type.name);
-        });
-
-        return Array.from(byFolder.entries()).map(([folder, types]) => {
-            return `import { ${types.join(', ')} } from '../../${folder}';`;
-        });
-
-    }
-
-    private buildSignature(buffer: string[]): void {
-        const parameters = this.parameters.map(param => {
-            let ret = `${param.name}: ${param.type.name}`;
-
-            if (param.defaultValue) {
-                const excl = param.defaultValue === 'null' ? '!': '';
-                ret += ` = ${param.defaultValue}${excl}`;
-            }
-
-            if (param.isPointer) {
-                ret += ` /* Pointer */`;
-            }
-
-            return ret;
-        }).join(', ');
-        const returnType = this.returnType.name;
-
-        buffer.push(`export function ${this.name}(${parameters}): ${returnType} {`)
-
-        const preRun: string[] = [];
-        const postRun: string[] = [];
-
-        const params: string[] = [];
-
-
-        this.parameters.map(param => {
-            if (param.isPointer) {
-                const dataview = `${param.name}DataView`;
-                preRun.push(`\tconst ${dataview} = ${param.type.name}.dataView;`)
-                params.push(`${dataview}`)
-                postRun.push(`\t${param.name}.read(${dataview});`)
-                return;
-            }
-
-            return params.push(param.name);
-        })
-
-        let realReturnType = returnType;
-
-        if (returnType === 'Vector3') {
-            realReturnType = `[number, number, number]`;
-            params.push('Citizen.resultAsVector()')
-            postRun.push(`\treturn Vector3.fromArray(result);`)
-        }
-
-        buffer.push(...preRun);
-        buffer.push(`\tconst result = Citizen.invokeNative<${realReturnType}>('${this.hash}', ${params.join(', ')});`)
-        buffer.push(...postRun);
-        
-        if (realReturnType === returnType) {
-            buffer.push(`\treturn result;`)
-        }
-
-
-        buffer.push('}')
-    }
+    return name;
 }
 
 export class FunctionsGenerator {
     private readonly _folder: string;
+    private readonly _outFolder: string;
 
-    constructor(folder: string) {
+    constructor(folder: string, outFolder: string) {
         this._folder = folder;
+        this._outFolder = outFolder
     }
 
     private _natives = new Map<string, Native[]>();
 
     public async generate() {
         const inFolder = path.join(process.cwd(), `native-db/${this._folder}`);
-        const outFolder = path.join(process.cwd(), `generated/${this._folder}`);
+        const outFolder = path.join(process.cwd(), `${this._outFolder}/${this._folder}`);
         await rmdir(outFolder, { recursive: true }).catch(() => { });
         await mkdir(outFolder).catch(() => { });
 
@@ -138,7 +63,7 @@ export class FunctionsGenerator {
 
         const folders: string[] = []
         await Promise.all(Array.from(this._natives.entries()).map(async ([namespace, natives]) => {
-            const folder =kebabCase(namespace);
+            const folder = kebabCase(namespace);
             const namespaceFolder = path.join(outFolder, folder);
             await mkdir(namespaceFolder).catch(() => { });
             const fileNames: string[] = [];
@@ -160,14 +85,27 @@ export class FunctionsGenerator {
     private parseName(node: Node, native: Native): void {
         const title = node.children[0].title;
         const [namespace, nativeName] = title.split('::');
-        const runtimeName = camelCase(nativeName);
+        let runtimeName = camelCase(nativeName);
+
+        if (!Number.isNaN(parseInt(runtimeName[0]))) {
+            runtimeName = 'n_' + runtimeName;
+        }
+
+
         native.name = runtimeName;
         native.namespace = camelCase(namespace);
     }
 
     private parseParameters(node: Node, native: Native): void {
-        const l = native.name === 'setFacialIdleAnimOverride' ? log : () => { };
-        const parameters = (node.findChildByName('Parameters')?.content ?? []).map(data => data.replace('*', '').replace(/\*\*/g, '').trim()).filter(Boolean);
+        const parameters = (node.findChildByName('Parameters')?.content ?? []).map(data => data
+            .split('\n')
+            .filter(x => x.startsWith('*'))
+            .join('\n')
+            .replace('*', '').replace(/\*\*/g, '').trim())
+            .map(x => x.split(':')[0])
+            .map(removeInvalidChars)
+            .filter(Boolean);
+
         parameters.forEach(param => {
             let [type, name] = param.split(' ');
             const isPointer = type.endsWith('\*');
@@ -175,12 +113,22 @@ export class FunctionsGenerator {
                 type = type.replace('\\*', '');
             }
 
-            const defaultValue = param.split('=')[1]?.split(':')[0].trim();
+            type = removeInvalidChars(type);
+            name = replaceReserved(removeInvalidChars(name));
+
+            let defaultValue = param.split('=')[1]?.split(':')[0].trim();
+       
+
             const runtimeType = resolveType(type);
+
+           
             native.parameters.push({ type: runtimeType, name, isPointer, defaultValue: defaultValue });
         });
 
-        let returnType = node.findChildByName('Returns')?.content.map(data => data.replace(/\**/g, '').trim()).filter(Boolean);;
+        let returnType = node.findChildByName('Returns')?.content
+        .filter(x => x.startsWith('*'))
+        .map(data => data.replace(/\**/g, '').trim().split(':')[0])
+        .filter(Boolean);
 
         if (!returnType) {
             returnType = ['VOID'];

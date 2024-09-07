@@ -12,14 +12,16 @@ export type TParseResult = {
 
 export abstract class Generator {
     protected _folder: string;
+    protected _outFolder: string;
 
-    constructor(folder: string) {
+    constructor(folder: string, outFolder: string) {
         this._folder = folder;
+        this._outFolder = outFolder;
     }
 
     public async generate(): Promise<void> {
         const inFolder = path.join(process.cwd(), `native-db/${this._folder}`);
-        const outFolder = path.join(process.cwd(), `generated/${this._folder}`);
+        const outFolder = path.join(process.cwd(), `${this._outFolder}/${this._folder}`);
 
         await rmdir(outFolder, { recursive: true }).catch(() => { });
         await mkdir(outFolder).catch(() => { });

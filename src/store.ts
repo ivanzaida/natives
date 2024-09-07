@@ -100,3 +100,6 @@ export const resolveType = (type: string): TTypeInfo => {
 
     return {name: type}
 }
+
+export const clientNatives = {};
+export const serverNatives = {};

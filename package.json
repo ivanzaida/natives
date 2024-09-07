@@ -5,16 +5,22 @@
   "author": "ivanzaida <lurkmorr228@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "start": "bun run src/index.ts",
+    "gen-natives": "bun run src/gen-natives.ts",
+    "gen-platform": "bun run src/gen-platform.ts",
+    "gen": "yarn gen-natives && yarn gen-platform",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
     "@types/node": "^22.5.1",
+    "axios": "^1.7.7",
     "bun": "^1.1.26",
     "change-case": "^5.4.4",
-    "md-2-json": "^2.0.0"
+    "fast-glob": "^3.3.2",
+    "md-2-json": "^2.0.0",
+    "parse-md": "^3.0.3"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "tsc": "^2.0.4",
     "typescript": "^5.5.4"
   }

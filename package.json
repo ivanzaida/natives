@@ -5,9 +5,7 @@
   "author": "ivanzaida <lurkmorr228@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "gen-natives": "bun run src/gen-natives.ts",
-    "gen-platform": "bun run src/gen-platform.ts",
-    "gen": "yarn gen-natives && yarn gen-platform",
+    "gen": "bun run src/index.ts && cd out/natives && tsc --noEmit",
     "check-types": "tsc --noEmit"
   },
   "dependencies": {

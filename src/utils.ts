@@ -82,7 +82,30 @@ export const types: Record<string, TTypeInfo> = {
         name: "Vector3",
         folder: 'predef',
         file: 'vector3.ts'
-    }
+    },
+    'VECTOR3': {
+        name: "Vector3",
+        folder: 'predef',
+        file: 'vector3.ts'
+    },
+    'ENTITY': {
+        name: 'number',
+    },
+    'CHAR*': {
+        name: 'string',
+    },
+    'VEHICLE': {
+        name: 'number',
+    },
+    'INT*': {
+        name: 'number',
+    },
+    'BLIP*': {
+        name: 'number',
+    },
+    'BOOL*': {
+        name: 'boolean',
+    },
 }
 
 const arrayPattern = /(\w+)\[(\d+)\]/;
@@ -101,5 +124,16 @@ export const resolveType = (type: string): TTypeInfo => {
     return {name: type}
 }
 
-export const clientNatives = {};
-export const serverNatives = {};
+const reserved = new Set<string>([
+    "true",
+    "default",
+    'class'
+])
+
+export function replaceReserved(name: string): string {
+    if (reserved.has(name)) {
+        return '_' +name;
+    }
+
+    return name;
+}

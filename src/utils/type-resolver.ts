@@ -1,6 +1,6 @@
 import { log } from "console";
 import { TTypeInfo } from "../models/type-info";
-import { STRING_PTR_TYPE } from "../const";
+import { ENUMS_FOLDER, STRING_PTR_TYPE, STRUCTS_FOLDER, TYPEDEFS_FOLDER } from "../const";
 
 export abstract class TypeResolver {
     private static readonly _aliases = new Map<string, string>();
@@ -82,17 +82,17 @@ export abstract class TypeResolver {
 
     public static isStruct(type: string) {
         const resolved = this.getType(type);
-        return resolved?.folder === 'structs';
+        return resolved?.folder === STRUCTS_FOLDER;
     }
 
     public static isEnum(type: string) {
         const resolved = this.getType(type);
-        return resolved?.folder === 'enums';
+        return resolved?.folder === ENUMS_FOLDER;
     }
 
     public static isTypedef(type: string) {
         const resolved = this.getType(type);
-        return resolved?.folder === 'typedefs';
+        return resolved?.folder === TYPEDEFS_FOLDER;
     }
 
     public static resolveImports(currFolder: string, rawTypes: string[]): string[] {

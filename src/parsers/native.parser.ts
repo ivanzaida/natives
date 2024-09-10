@@ -4,7 +4,6 @@ import { Native, TFuncParam } from "../models/func";
 import { camelCase, kebabCase } from "change-case";
 import { MdParser } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
-import { log } from "console";
 
 export class NativeParser {
     private readonly _inFolder: string;
@@ -26,6 +25,7 @@ export class NativeParser {
             const model = this._parseNative(content);
             const fileName = kebabCase(model.name) + '.ts';
             await writeFile(`${this._outFolder}/${fileName}`, model.compile(), 'utf-8');
+            fileNames.push(fileName);
         }));
 
         const index = fileNames.map(x => `export * from './${x.replace('.ts', '')}';`).join('\n');

@@ -6,7 +6,7 @@ import { EnumModel, TEnumField } from "../models/enum";
 import { TypeResolver } from "../utils/type-resolver";
 import { log } from "console";
 import path from "path";
-import { INT_TYPE } from "../const";
+import { ENUMS_FOLDER, INT_TYPE } from "../const";
 import { FileUtils } from "../utils/file-utils";
 
 export class EnumParser {
@@ -39,7 +39,7 @@ export class EnumParser {
             const int = TypeResolver.getType('int')!;
             TypeResolver.addType({
                 ...int, nativeName: model.nativeName, runtimeName: model.runtimeName,
-                folder: 'enums'
+                folder: ENUMS_FOLDER,
             }, TypeResolver.getTypeSize('int')!);
 
             const fileName = kebabCase(name).replace('e-', '') + '.enum.ts';
@@ -98,8 +98,8 @@ export class EnumParser {
                     value = parseInt(value).toString();
                 }
             }
-            
-           
+
+
             fields.push({
                 name,
                 defaultValue: value,
@@ -107,7 +107,7 @@ export class EnumParser {
                 comment
             });
         }
-        
+
         TypeResolver.addAlias(enumName, INT_TYPE);
         TypeResolver.addAlias(nativeName, INT_TYPE);
 

@@ -5,6 +5,7 @@ import { Struct } from "../models/struct";
 import { MdParser, TStructField } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 import path from "path";
+import { STRUCTS_FOLDER } from "../const";
 
 export class StructParser {
     private readonly _inFolder: string;
@@ -30,6 +31,8 @@ export class StructParser {
         await rmdir(this._outFolder, { recursive: true }).catch(() => { });
         await mkdir(path.resolve(this._outFolder), { recursive: true });
 
+        const fileNames: string[] = [];
+
         for (const file of files) {
             const name = this._cleanupName(file);
             const content = await readFile(`${this._inFolder}/${file}`, 'utf-8');
@@ -38,17 +41,18 @@ export class StructParser {
                 throw new Error(`Failed to parse structure from file ${file}`);
             }
             this._structs.set(struct.nativeName, struct);
-       
         }
 
         for (const struct of this._structs.values()) {
             const size = this._countStructSize(struct);
+            const fileName = `${kebabCase(struct.name)}.ts`;
             TypeResolver.addType({
                 nativeName: struct.nativeName,
                 runtimeName: struct.name,
-                fileName: `${kebabCase(struct.name)}.ts`,
-                folder: 'structs'
+                fileName,
+                folder: STRUCTS_FOLDER
             }, struct.size)
+            fileNames.push(fileName);
         }
 
         for (const struct of this._structs.values()) {
@@ -56,6 +60,9 @@ export class StructParser {
             const content = struct.compile();
             await writeFile(`${this._outFolder}/${fileName}`, content, 'utf-8');
         }
+
+        const index = fileNames.map((file) => `export * from './${file.replace('.ts', '')}';`).join('\n');
+        await writeFile(`${this._outFolder}/index.ts`, index, 'utf-8');
     }
 
 

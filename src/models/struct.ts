@@ -1,4 +1,4 @@
-import { STRING_PTR_TYPE } from "../const";
+import { STRING_PTR_TYPE, STRUCTS_FOLDER } from "../const";
 import { TStructField } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 
@@ -16,7 +16,7 @@ export class Struct {
     }
 
     public compile(): string {
-        const imports = TypeResolver.resolveImports('structs', this.fields.map(f => f.type));
+        const imports = TypeResolver.resolveImports(STRUCTS_FOLDER, this.fields.map(f => f.type));
         const buffer: string[] = [];
 
         const hasString = this.fields.some(f => TypeResolver.getType(f.type)!.runtimeName === 'string');

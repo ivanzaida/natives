@@ -4,6 +4,7 @@ import { MdParser } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 import path from "path";
 import { log } from "console";
+import { TYPEDEFS_FOLDER } from "../const";
 
 export class TypedefsParser {
     private readonly _inFolder: string;
@@ -37,7 +38,7 @@ export class TypedefsParser {
             TypeResolver.addType({
                 ...resolved, nativeName, runtimeName,
                 fileName,
-                folder: 'typedefs',
+                folder: TYPEDEFS_FOLDER,
             }, TypeResolver.getTypeSize(type)!);
             
             TypeResolver.addAlias(nativeName, type);

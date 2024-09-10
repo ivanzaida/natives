@@ -6,6 +6,8 @@ import { EnumModel, TEnumField } from "../models/enum";
 import { TypeResolver } from "../utils/type-resolver";
 import { log } from "console";
 import path from "path";
+import { INT_TYPE } from "../const";
+import { FileUtils } from "../utils/file-utils";
 
 export class EnumParser {
 
@@ -32,7 +34,7 @@ export class EnumParser {
         for (const file of files) {
             const nativeName = file.replace('.md', '');
             const name = this._cleanupName(file);
-            const content = await readFile(`${this._inFolder}/${file}`, 'utf-8');
+            const content = await FileUtils.readFile(`${this._inFolder}/${file}`);
             const model = this.parseEnum(file.replace('.md', ''), name, content);
             const int = TypeResolver.getType('int')!;
             TypeResolver.addType({
@@ -59,7 +61,7 @@ export class EnumParser {
         return 'E' + pascalCase(kebab);
     }
 
-    private parseEnum(nativeName: string, name: string, content: string): EnumModel {
+    private parseEnum(nativeName: string, enumName: string, content: string): EnumModel {
         const values = MdParser.parseSection('Values', content);
         const lines = values.split('\n');
         const fnRegex = /(\w+)\("([^"]+)"\)/;
@@ -78,6 +80,8 @@ export class EnumParser {
                 value = 'hash("DEFAULT_SPLINE_CAMERA")'; // Fix typo
             }
 
+            value = value?.replace(/[.,;:!?]/g, '')
+
             if (fnRegex.test(value)) {
                 const [, func, arg] = fnRegex.exec(value)!;
                 const handler = this._fns[func];
@@ -89,20 +93,25 @@ export class EnumParser {
 
             if (value) {
                 if (value && Number.isNaN(Number(value))) {
-                    throw new Error(`Invalid value for enum ${name}: ${value}`);
+                    throw new Error(`Invalid value for enum ${nativeName}: ${name} = ${value}`);
                 } else {
                     value = parseInt(value).toString();
                 }
             }
-
+            
+           
             fields.push({
                 name,
                 defaultValue: value,
-                type: TypeResolver.getType('int')!,
+                type: TypeResolver.getType(INT_TYPE)!,
                 comment
             });
         }
+        
+        TypeResolver.addAlias(enumName, INT_TYPE);
+        TypeResolver.addAlias(nativeName, INT_TYPE);
 
-        return new EnumModel(nativeName, name, fields);
+
+        return new EnumModel(nativeName, enumName, fields);
     }
 }

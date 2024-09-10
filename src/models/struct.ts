@@ -1,3 +1,4 @@
+import { STRING_PTR_TYPE } from "../const";
 import { TStructField } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 
@@ -21,7 +22,8 @@ export class Struct {
         const hasString = this.fields.some(f => TypeResolver.getType(f.type)!.runtimeName === 'string');
 
         if (hasString) {
-            imports.push(`import { StringPtr } from '../types/stringptr';`);
+            const type = TypeResolver.getType(STRING_PTR_TYPE)!;
+            imports.push(`import { ${type.runtimeName} } from '../${type.folder}/${type.fileName.replace('.ts', '')}';`);
         }
 
 

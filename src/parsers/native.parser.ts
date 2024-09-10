@@ -21,13 +21,12 @@ export class NativeParser {
         await mkdir(path.resolve(this._outFolder), { recursive: true });
         const fileNames: string[] = [];
 
-        for (const file of files) {
+        await Promise.all(files.map(async (file) => {
             const content = await readFile(`${this._inFolder}/${file}`, 'utf-8');
             const model = this._parseNative(content);
-
             const fileName = kebabCase(model.name) + '.ts';
             await writeFile(`${this._outFolder}/${fileName}`, model.compile(), 'utf-8');
-        }
+        }));
 
         const index = fileNames.map(x => `export * from './${x.replace('.ts', '')}';`).join('\n');
         await writeFile(`${this._outFolder}/index.ts`, index, 'utf-8');
@@ -36,7 +35,7 @@ export class NativeParser {
     private _parseNative(content: string): Native {
         const [header] = content.split('\n');
 
-        const [namespace, name] = header.split('::')
+        const [namespace, name] = header.split('::').map(x => MdParser.removeTextStyle(x).trim());
         const paramsRaw = MdParser.parseSection('Parameters', content).split('\n').filter(Boolean);
         const params : TFuncParam[] = paramsRaw
             .map(x => {
@@ -50,7 +49,6 @@ export class NativeParser {
                 const parsed = MdParser.parseField(cleaned);
 
                 let type = TypeResolver.getType(parsed.type);
-
 
                 if (!type) {
                     throw new Error(`Failed to resolve type ${parsed.type} in ${name}`);
@@ -75,7 +73,9 @@ export class NativeParser {
             throw new Error(`Failed to resolve type ${returnType} in ${name}`);
         }
 
-        const model = new Native(namespace, camelCase(name), Hash, params, type);
+        const notes = MdParser.parseSection('Notes', content);
+
+        const model = new Native(this._outFolder, namespace, name, camelCase(name), Hash, params, type, notes.split('\n').filter(Boolean).filter(x => !x.startsWith('<!--')));
 
         return model;
     }

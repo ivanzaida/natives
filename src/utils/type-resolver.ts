@@ -1,9 +1,10 @@
 import { log } from "console";
 import { TTypeInfo } from "../models/type-info";
+import { STRING_PTR_TYPE } from "../const";
 
 export abstract class TypeResolver {
     private static readonly _aliases = new Map<string, string>();
-    
+
     private static readonly _primitives = new Map<string, string>([
         ['int', 'number'],
         ['float', 'number'],
@@ -22,6 +23,19 @@ export abstract class TypeResolver {
         ['DATAFILE_ARRAY'.toLowerCase(), 'string[]'],
         ['UNKNOWN'.toLowerCase(), 'unknown'],
         ['STRUCT'.toLowerCase(), 'DataView'],
+    ]);
+
+    private static readonly _stringTypes = new Set<string>([
+        'TEXT_LABEL_3'.toLowerCase(),
+        'TEXT_LABEL_7'.toLowerCase(),
+        'TEXT_LABEL_15'.toLowerCase(),
+        'TEXT_LABEL_23'.toLowerCase(),
+        'TEXT_LABEL_31'.toLowerCase(),
+        'TEXT_LABEL_63'.toLowerCase(),
+        'TEXT_LABEL'.toLowerCase(),
+        'STRING'.toLowerCase(),
+        'CHAR*'.toLowerCase(),
+        STRING_PTR_TYPE.toLowerCase()
     ]);
 
     private static readonly _typeSizes = new Map<string, number>([
@@ -43,10 +57,6 @@ export abstract class TypeResolver {
     ]);
 
     private static readonly _generatedTypes = new Map<string, TTypeInfo>([
-        ['int*', { folder: 'types', fileName: 'intptr.ts', runtimeName: 'IntPtr', nativeName: 'int*' }],
-        ['float*', { folder: 'types', fileName: 'floatptr.ts', runtimeName: 'FloatPtr', nativeName: 'float*' }],
-        ['vector', { folder: 'types', fileName: 'vector3.ts', runtimeName: 'Vector', nativeName: 'vector' }],
-        
     ]);
 
     public static isPrimitiveType(nativeType: string): boolean {
@@ -84,17 +94,17 @@ export abstract class TypeResolver {
         const resolved = this.getType(type);
         return resolved?.folder === 'typedefs';
     }
-    
+
     public static resolveImports(currFolder: string, rawTypes: string[]): string[] {
         const types = rawTypes.map(t => this.getType(t)).filter(Boolean) as TTypeInfo[];
         const imports = new Map<string, Set<string>>();
 
         for (const type of types) {
-            if (!type.folder) {
+            const key = this.resolveImport(currFolder, type)!;
+
+            if (!key) {
                 continue;
             }
-
-            const key = type.folder === currFolder ? `./${type.fileName.replace('.ts', '')}` : `../${type.folder}/${type.fileName.replace('.ts', '')}`;
 
             if (!imports.has(key)) {
                 imports.set(key, new Set());
@@ -109,15 +119,30 @@ export abstract class TypeResolver {
             buffer.push(`import { ${Array.from(values).join(', ')} } from '${key}'`);
         }
 
-
         return buffer;
+    }
+
+    public static resolveImport(currFolder: string, type: TTypeInfo): string | null {
+        if (!type.folder) {
+            return null;
+        }
+        return type.folder === currFolder ? `./${type.fileName.replace('.ts', '')}` : `../${type.folder}/${type.fileName.replace('.ts', '')}`;
     }
 
     public static addAlias(nativeName: string, runtimeName: string): void {
         this._aliases.set(nativeName, runtimeName);
     }
 
-    public static getAlias(nativeName: string): string  {
+    public static getAlias(nativeName: string): string {
         return this._aliases.get(nativeName) ?? nativeName;
+    }
+
+    public static isStringType(type: string): boolean {
+        return this._stringTypes.has(type.trim().toLowerCase());
+    }
+    
+    public static isGenerated(type: string): boolean {
+        const t = this.getType(type);
+        return t?.folder === 'types';
     }
 }

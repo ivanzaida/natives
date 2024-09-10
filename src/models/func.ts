@@ -2,182 +2,228 @@ import { log } from "console";
 import { TypeResolver } from "../utils/type-resolver";
 import { TTypeInfo } from "./type-info";
 import { TStructField } from "../utils/md-parser";
+import { NATIVE_STRUCT_TYPE, NATIVE_UNKNOWN_TYPE, NATIVE_VECTOR_TYPE } from "../const";
+import { VectorPtr } from "../types";
 
 export type TFuncParam = { field: TStructField, type: TTypeInfo };
-
+export type TFunReturnType = TTypeInfo & { name: string }
 
 export class Native {
+    public readonly currentFolder: string;
     public readonly namespace: string;
     public readonly name: string;
+    public readonly nativeName: string;
     public readonly hash: string;
     public readonly parameters: TFuncParam[] = [];
     public readonly returnType: TTypeInfo;
+    public readonly notes: string[] = [];
 
-
-    constructor(namespace: string, name: string, hash: string, parameters: TFuncParam[], returnType: TTypeInfo) {
+    constructor(currentFolder: string, namespace: string, nativeName: string, name: string, hash: string, parameters: TFuncParam[], returnType: TTypeInfo, notes: string[]) {
+        this.currentFolder = currentFolder;
         this.name = name;
+        this.nativeName = nativeName;
         this.hash = hash;
         this.parameters = parameters;
         this.returnType = returnType;
         this.namespace = namespace;
+        this.notes = notes;
     }
 
     public compile(): string {
         const buffer: string[] = [];
-        const imports = TypeResolver.resolveImports('functions', this.parameters.map(x => x.type).concat(this.returnType).map(x => x.nativeName));
-        imports.push(`import { invokeNative } from '../types/invoke-native';`);
-        buffer.push(...imports);
-        buffer.push('');
-
-        const name = this.name.startsWith('0x') ? '_' + this.name : this.name;
-        const pointers: number[] = [];
-
-        const params = this.parameters.map((x, i) => {
-            let str = `${x.field.name}: ${x.type.runtimeName}`;
-            if (x.field.isPointer && x.type.runtimeName !== 'DataView') {
-                pointers.push(i);
-                return null;
-            }
-            return str;
-        }).filter(x => x !== null).join(', ');
-
-        let returnType = this.returnType.runtimeName;
-
-
-        if (pointers.length) {
-            const retTypes = [];
-            if (returnType !== 'void') {
-                retTypes.push(returnType);
-            }
-            for (const i of pointers) {
-                const name = this.parameters[i].field.name;
-                const runtimeName = this.parameters[i].type.runtimeName;
-                retTypes.push(`${name}: ${runtimeName}`);
-            }
-            returnType = `[${retTypes.join(', ')}]`;
-        }
-
-
-        buffer.push(`export function ${name}(${params}): ${returnType} {`);
-
-        const passParams = this.parameters.filter(x => {
-            if (!x.field.isPointer) {
-                return true;
-            }
-        }).map(x => {
-            const name = x.field.name;
-            return this._parseReserved(x.field.name);
-        });
-
-        const returns: string[] = [];
-
+        const realParams = this._getRealParams();
+        this._resolveImports(buffer, realParams);
+        const acceptingParameters: string[] = [];
+        const passParameters: string[] = [];
         const preRuns: string[] = [];
         const postRuns: string[] = [];
 
-        for (const i of pointers) {
-            const param = this.parameters[i];
-            const name = param.field.name;
-            let definition = `\tconst ${name}`;
+        realParams.forEach((param, idx) => {
+            const paramName = param.field.name;
+            const paramType = param.type.runtimeName;
 
-            if (param.type.nativeName === 'STRUCT') {
+            let compiledName = `${paramName}: ${paramType}`;
 
+            if (TypeResolver.isEnum(param.type.nativeName)) {
+                compiledName += ' | number';
             }
 
-            if (param.type.runtimeName === 'Vector3') {
-                definition += `_dv = new DataView(new ArrayBuffer(24));`
-                postRuns.push(`\tconst ${param.field.name} = new Vector3(${name}_dv.getFloat32(0, true), ${name}_dv.getFloat32(8, true), ${name}_dv.getFloat32(16, true));`);
-            }
-
-            if (TypeResolver.isStruct(param.type.nativeName)) {
-                definition += ` = new ${param.type.runtimeName}();`
-                passParams[i] = `${name}.dataView`;
-            }
-
-            if (TypeResolver.isPrimitiveType(param.type.nativeName) || TypeResolver.isTypedef(param.type.nativeName)) {
-                let size = TypeResolver.getTypeSize(param.type.nativeName)!;
-                const sizeNames = ['size', 'dataSize', 'sizeOfData', 'sizeOfStructNotCount', 'sizeOfStruct', 'stackSize']
-                if (param.type.nativeName === 'STRUCT') {
-                    const sizeField = this.parameters.find(x => {
-                        if (x.type.nativeName === 'INT' && sizeNames.includes(x.field.name)) {
-                            return true;
-                        }
-                        return false;
-                    })
-
-                    if (!sizeField) {
-                        throw new Error(`Failed to find size for struct in ${this.name}`);
+            if (param.field.isPointer) {
+                compiledName += ' /* ptr */';
+                if (TypeResolver.isStruct(param.type.nativeName) || TypeResolver.isGenerated(param.type.nativeName)) {
+                    if (param.type.nativeName === NATIVE_VECTOR_TYPE.toLocaleLowerCase()) {
+                        const vectorPtr = TypeResolver.getType(VectorPtr.name)!;
+                        preRuns.push(`const ${paramName}Ptr = new ${vectorPtr.runtimeName}();`);
+                        passParameters.push(`${paramName}Ptr.dataView`);
+                        postRuns.push(`${paramName}Ptr.copyToVector(${paramName});`);
+                    } else {
+                        passParameters.push(`${paramName}.dataView`);
                     }
-                    const sizeArg = sizeField.field.name;
-                    definition += ` = new DataView(new ArrayBuffer(${sizeArg}));`
                 } else {
-                    definition += `_dv = new DataView(new ArrayBuffer(${TypeResolver.getTypeSize(param.type.nativeName)}));`
-                    const func = this._getDvFunc(`${name}_dv`, TypeResolver.getAlias(param.type.nativeName), size.toString(), 0);
-                    postRuns.push(`\tconst ${param.field.name} = ${func};`);
+                    passParameters.push(paramName);
                 }
+            } else {
+                passParameters.push(paramName);
             }
 
-            returns.push(`${name}`);
-            preRuns.push(definition);
+            if (param.field.defaultValue) {
+                compiledName += ` = ${param.field.defaultValue}`;
+            }
+
+            if (param.field.comment) {
+                compiledName += ` /* ${param.field.comment} */`;
+            }
+
+            acceptingParameters.push(compiledName);
+        });
+
+        let returnType = this.returnType.runtimeName;
+        const returnsVector = this.returnType === TypeResolver.getType(NATIVE_VECTOR_TYPE);
+
+        const funcName = this.name.startsWith('0x') ? `n_${this.name}` : this.name;
+        this._buildComments(realParams, buffer);
+        buffer.push(`export function ${funcName}(${acceptingParameters.join(', ')}): ${returnType} {`);
+
+        let returnSignature = returnType;
+        let returnTransformation = '';
+        const resultVar = `${funcName}_result`;
+
+
+        if (returnsVector) {
+            returnSignature = '[number, number, number]';
+            passParameters.push('resultAsVector()');
+            returnTransformation = `Vector3.fromArray(${resultVar})`;
         }
 
 
-
-        let returnSignature = this.returnType.runtimeName;
-
-        if (returnSignature === 'Vector3') {
-            returnSignature = `[number, number, number]`;
-            returns.unshift('Vector3.fromArray(res)');
+        buffer.push(...preRuns.map(x => `\t${x}`));
+        buffer.push(`\tconst ${resultVar} = invokeNative<${returnSignature}>('${this.hash}', ${passParameters.join(', ')});`);
+        buffer.push(...postRuns.map(x => `\t${x}`));
+        if (returnTransformation) {
+            buffer.push(`\treturn ${returnTransformation};`);
         } else {
-            returns.unshift('res');
-
+            buffer.push(`\treturn ${resultVar};`);
         }
-
-        buffer.push(...preRuns);
-        buffer.push(`\tconst res = invokeNative<${returnSignature}>('${this.hash}', ${passParams.join(', ')});`);
-        buffer.push(...postRuns);
-
-        if (returns.length > 1) {
-            buffer.push(`\treturn [${returns.join(', ')}];`);
-        } else if (returns.length === 1) {
-            buffer.push(`\treturn ${returns[0]};`);
-        }
-
         buffer.push('}');
 
         return buffer.join('\n');
     }
 
-    private _getDvFunc(dvName: string, type: string, size: string, offset: number): string {
-        const lowerType = type.toLowerCase();
-        switch (lowerType) {
-            case 'int':
-                return `${dvName}.getInt32(${offset}, true)`;
-            case 'float':
-                return `${dvName}.getFloat32(${offset}, true)`;
-            case 'bool':
-                return `${dvName}.getUint8(${offset}, true) !== 0`;
-            case 'struct':
-                return `new DataView(new ArrayBuffer(${size}))`;
+    private _buildComments(realParams: TFuncParam[], buffer: string[]): void {
+        buffer.push(`/**`);
+        buffer.push(` * ${this.namespace}:${this.nativeName}`)
+        buffer.push(` *`)
+        buffer.push(` * ${this.hash}`);
+
+        const commentsBuffer: string[] = [];
+
+
+        if (this.notes.length) {
+            this.notes.forEach(note => {
+                commentsBuffer.push('')
+                commentsBuffer.push(note);
+            });
+        }
+        
+
+        commentsBuffer.push('');
+        commentsBuffer.push('------------------------------------------------------------------');
+        realParams.forEach(param => {
+            let fieldText = `@param {${param.type.runtimeName}} ${param.field.name}`;
+
+            if (param.field.comment) {
+                fieldText += ` ${param.field.comment}`;
+            }
+
+            if (param.field.isPointer) {
+                fieldText += ' [Pointer]';
+            }
+            commentsBuffer.push(fieldText);
+        });
+
+        commentsBuffer.forEach(comment => {
+            comment = comment.replace(/\*/g, '');
+            buffer.push(` * ${comment}`);
+        })
+      
+        if (this.returnType.runtimeName !== 'void') {
+            buffer.push(` * @returns {${this.returnType.runtimeName}} result`);
+        }
+        buffer.push(' */')
+    }
+
+    private _resolveImports(buffer: string[], parameters: TFuncParam[]): void {
+        const imports = TypeResolver.resolveImports(this.currentFolder, parameters.map(x => x.type).concat(this.returnType).map(x => x.nativeName));
+        const returnsVector = this.returnType === TypeResolver.getType(NATIVE_VECTOR_TYPE);
+        if (returnsVector) {
+            imports.push(`import { invokeNative, resultAsVector } from '../types/invoke-native';`);
+        } else {
+            imports.push(`import { invokeNative } from '../types/invoke-native';`);
+        }
+        const hasVector = parameters.some(x => x.type.nativeName === NATIVE_VECTOR_TYPE.toLowerCase());
+
+        if (hasVector) {
+            const vecPtr = VectorPtr.name;
+            const path = TypeResolver.resolveImport(this.currentFolder, TypeResolver.getType(vecPtr)!)!;
+            imports.push(`import { ${vecPtr} } from '${path}';`);
         }
 
-        if (lowerType.startsWith('text_label')) {
-            let len = parseInt(lowerType.split('_')[2] ?? '64');
-            return `new StringPtr(${dvName}.getUint32(${offset}, true), ${len})`;
+        if (imports.length) {
+            buffer.push(...new Set(imports));
+            buffer.push('');
         }
+    }
 
-        return '';
+    private _parseReserved(name: string): string {
+        switch (name) {
+            case 'true':
+                return 'flag';
+            case 'default':
+                return 'defaultValue';
+            case 'package':
+                return 'pkg';
+            default:
+                return name;
+        }
     }
 
 
-    private _reservedFields = new Set<string>([
-        "true", "default"
-    ])
-    
-    private _parseReserved(name: string): string {
-        if (this._reservedFields.has(name)) {
-            log(`Reserved field name ${name} in ${this.name}`);
-            return `_${name}`;
-        }
-        return name;
+    private static readonly _ignoredTypes = new Set<string>([NATIVE_VECTOR_TYPE, NATIVE_STRUCT_TYPE, NATIVE_UNKNOWN_TYPE].map(x => x.toLowerCase()));
+
+    private _getRealParams(): TFuncParam[] {
+        return this.parameters.map(param => {
+            param.field = { ...param.field, name: this._parseReserved(param.field.name) };
+
+            if (!param.field.isPointer) {
+                return param;
+            }
+
+            if (Native._ignoredTypes.has(param.type.nativeName.toLowerCase())) {
+                return param;
+            }
+
+            if (TypeResolver.isStruct(param.type.nativeName)) {
+                return param;
+            }
+
+            let typeName = TypeResolver.getAlias(param.type.nativeName);
+
+            const isString = TypeResolver.isStringType(typeName);
+            if (isString) {
+                typeName = 'string*';
+            } else {
+                typeName = typeName + '*';
+            }
+
+            const type = TypeResolver.getType(typeName);
+
+            if (!type) {
+                throw new Error(`Type ${typeName} not found`);
+            }
+
+
+
+            return { field: param.field, type: type! };
+        })
     }
 }

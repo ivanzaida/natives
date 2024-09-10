@@ -1,3 +1,5 @@
+import { log } from "console";
+
 export type TStructField = {
     name: string;
     type: string;
@@ -82,9 +84,23 @@ export abstract class MdParser {
 
     public static parseField(fieldText: string): TStructField {
         let [type, name] = fieldText.split(' ').map(part => part.replace(':', '').trim());
-        let [, comment] = fieldText.split(':');
-        comment = comment ? comment.trim() : '';
 
+        const nameIndex = fieldText.indexOf(name);
+        const afterName = fieldText.substring(nameIndex + name.length).trim();
+
+        let defaultValue = '';
+        let comment = '';
+
+        if (afterName.startsWith('=')) {
+            const defaultValueIndex = afterName.indexOf('=');
+            [defaultValue, comment] = afterName.substring(defaultValueIndex + 1).split(':');
+            defaultValue = defaultValue.trim();
+            if (defaultValue === 'null') {
+                defaultValue = 'null!';
+            }
+            comment = comment?.trim();
+        }
+        
         const isPointer = type.endsWith('\*');
 
         if (isPointer) {
@@ -107,7 +123,8 @@ export abstract class MdParser {
             arraySize: size,
             isArray: size > 1,
             offset: 0,
-            isPointer
+            isPointer,
+            defaultValue,
         }
     }
 }

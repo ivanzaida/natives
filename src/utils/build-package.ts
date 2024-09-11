@@ -36,14 +36,14 @@ export const buildTsConfig = (types: string[] = []): any => {
         "compilerOptions": {
             "lib": ["ES6", "ES2021"],
             "downlevelIteration": true,
-            "module": "ESNext",
+            "module": "commonjs",
             "incremental": true,
             "allowJs": false,
             "moduleResolution": "node",
             "target": "esnext",
             "resolveJsonModule": true,
             "esModuleInterop": true,
-            "removeComments": true,
+            "removeComments": false,
             "preserveConstEnums": true,
             "sourceMap": true,
             "baseUrl": "./src",
@@ -51,7 +51,7 @@ export const buildTsConfig = (types: string[] = []): any => {
             "sourceRoot": "./src",
             "outDir": "./dist",
             "declaration": true,
-            "typeRoots": types
+            "typeRoots": types,
         },
         "exclude": ["node_modules"]
     }

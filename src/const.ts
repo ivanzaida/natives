@@ -9,10 +9,10 @@ export const ENUMS_FOLDER = 'enums';
 export const FUNCTIONS_FOLDER = 'functions';
 export const TYPEDEFS_FOLDER = 'typedefs';
 
-export const MODELS_PROJECT_NAME = 'fivem-native-models';
-export const NATIVES_PROJECT_NAME = 'fivem-native-functions';
-export const CFX_SHARED_PROJECT_NAME = 'fivem-shared-functions';
-export const CFX_CLIENT_PROJECT_NAME = 'fivem-client-functions';
-export const CFX_SERVER_PROJECT_NAME = 'fivem-server-functions';
+export const MODELS_PROJECT_NAME = 'structures';
+export const NATIVES_PROJECT_NAME = 'natives';
+export const CFX_SHARED_PROJECT_NAME = 'fivem-shared';
+export const CFX_CLIENT_PROJECT_NAME = 'fivem-client';
+export const CFX_SERVER_PROJECT_NAME = 'fivem-server';
 
 export const RELEASING_ORG = '@ivanzaida'

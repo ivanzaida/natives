@@ -6,7 +6,7 @@ import { NATIVE_STRUCT_TYPE, NATIVE_UNKNOWN_TYPE, NATIVE_VECTOR_TYPE } from "../
 import { Vector3Ref } from "../types";
 
 export type TFuncParam = { field: TStructField, type: TTypeInfo };
-export type TFunReturnType = TTypeInfo & { name: string, isArray: boolean };
+export type TFunReturnType = TTypeInfo & { name: string, isArray: boolean, comment?: string };
 
 export class Native {
     public readonly currentFolder: string;
@@ -109,7 +109,7 @@ export class Native {
             passParameters.push('Citizen.resultAsObject()');
         }
 
-      
+
 
         buffer.push(...preRuns.map(x => `\t${x}`));
         buffer.push(`\tconst ${resultVar} = Citizen.invokeNative<${returnSignature}>('${this.hash}', ${passParameters.join(', ')});`);
@@ -129,13 +129,13 @@ export class Native {
         buffer.push(` * ${this.namespace}:${this.nativeName}`)
         buffer.push(` *`)
         buffer.push(` * ${this.hash}`);
+        buffer.push('\r')
 
         const commentsBuffer: string[] = [];
 
 
         if (this.notes.length) {
             this.notes.forEach(note => {
-                commentsBuffer.push('')
                 commentsBuffer.push(note);
             });
         }
@@ -151,7 +151,7 @@ export class Native {
             }
 
             if (param.field.isPointer) {
-                fieldText += ' [Pointer]';
+                fieldText += ' [Ref]';
             }
             commentsBuffer.push(fieldText);
         });
@@ -162,7 +162,10 @@ export class Native {
         })
 
         if (this.returnType.runtimeName !== 'void') {
-            buffer.push(` * @returns {${this.returnType.runtimeName}} result`);
+            const name = this.returnType.name ?? 'returnValue';
+            const comment = this.returnType.comment ?? '';
+            let str = ` * @returns {${this.returnType.runtimeName}} ${name} ${comment}`;
+            buffer.push(str);
         }
         buffer.push(' */')
     }

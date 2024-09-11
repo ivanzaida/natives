@@ -6,8 +6,7 @@
   "author": "ivanzaida <lurkmorr228@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "gen": "bun run src/index.ts",
-    "check-types": "tsc --noEmit"
+    "gen": "bun run src/index.ts"
   },
   "dependencies": {
     "@types/node": "^22.5.1",

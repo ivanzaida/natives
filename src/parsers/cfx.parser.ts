@@ -63,9 +63,10 @@ export class CfxParser {
                 throw new Error(`Failed to parse name from ${file}`);
             }
 
-            name = MdParser.removeTextStyle(name);
 
+            name = MdParser.removeTextStyle(name);
             const isNative = TypeResolver.hasNative(name);
+
 
             if (isNative) {
                 if (metadata.apiset !== 'server') {
@@ -83,8 +84,7 @@ export class CfxParser {
                 continue;
             }
 
-
-            const native = this._parseNative(code, file, metadata, name);
+            const native = this._parseNative(code, file, fileContent, metadata, name);
 
             if (metadata.apiset === 'shared') {
                 sharedFunctions.push(native);
@@ -107,8 +107,6 @@ export class CfxParser {
                 await writeFile(path.join(srcFolder, `${kebabCase(func.name)}.ts`), content);
             }))
 
-
-
             const dtsFile = 'index.d.ts';
             const tsConfig = buildTsConfig([dtsFile]);
             const pkgJson = buildPackageJson(project, [MODELS_PROJECT_NAME]);
@@ -124,12 +122,52 @@ export class CfxParser {
         ]);
     }
 
-    private _parseNative(code: string[], file: string, metadata: TCfxMetadata, name: string): Native {
-        const func = code.map(CfxParser._parseFunction).filter(Boolean).find(x => x.functionName === name);
+    private _parseNative(code: string[], file: string, fileContent: string, metadata: TCfxMetadata, name: string): Native {
+        let func: TFunctionSignature | undefined = undefined;
+        let afterCodeText = '';
+
+        for (const codeBlock of code) {
+            const f = CfxParser._parseFunction(codeBlock);
+            if (f.functionName !== name) {
+                log(f.functionName, name)
+                continue;
+            }
+            func = f;
+            if (func) {
+                const len = fileContent.indexOf(codeBlock) + codeBlock.length;
+                const content = fileContent.substring(len).split('\n').map(x => x.trim()).filter(Boolean);
+
+                for (let i = 1; i < content.length; i++) {
+                    const line = content[i].trim();
+                    if (line.startsWith('##')) {
+                        let nextFound = false;
+                        for (let j = i + 1; j < content.length; j++) {
+                            const line2 = content[j].trim();
+                            if (line2.startsWith('##')) {
+                                i = j - 1;
+                                nextFound = true;
+                                break;
+                            }
+                        }
+                        if (!nextFound) {
+                            break;
+                        }
+                    } else {
+                        afterCodeText += line + '\r';
+                    }
+                }
+
+                break;
+            }
+        }
+
+       
 
         if (!func) {
             throw new Error(`Failed to parse function from ${file}`);
         }
+
+    
 
         let funcReturnType = func.returnType;
         const isArray = funcReturnType.endsWith('[]');
@@ -137,8 +175,6 @@ export class CfxParser {
         if (isArray) {
             funcReturnType = funcReturnType.substring(0, funcReturnType.length - 2);
         }
-
-        
 
         let returnType = TypeResolver.getType(funcReturnType);
 
@@ -151,6 +187,19 @@ export class CfxParser {
         if (retAlias) {
             returnType = TypeResolver.getType(retAlias)!;
         }
+
+        const parametersSection = MdParser.parseSection('Parameters', fileContent)
+            .split('\n')
+            .map(x => MdParser.removeTextStyle(x))
+            .filter(Boolean)
+            .reduce((acc, x) => {
+                if (x.startsWith('* ')) {
+                    x = x.substring(2);
+                }
+                const [name, comment] = x.split(':').map(x => x.trim());
+                acc[name] = comment;
+                return acc;
+            }, {} as Record<string, string>);
 
         const params: TFuncParam[] = func.params.map(param => {
             let field = MdParser.parseField(`${param.type} ${param.name}`);
@@ -172,7 +221,7 @@ export class CfxParser {
                 type = TypeResolver.getType(alias)!;
             }
 
-        
+            field.comment = parametersSection[param.name];
 
             return { type, field };
         })
@@ -195,7 +244,13 @@ export class CfxParser {
             throw new Error(`Failed to parse project name from ${file}`);
         }
 
-        return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, { ...returnType, name: '', isArray }, []);
+        const returns = MdParser.parseSection('Return value', fileContent).trim();
+
+        if (func.functionName === 'CREATE_RUNTIME_TEXTURE') {
+            log({returns});
+        }
+
+        return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, { ...returnType, name: '', isArray, comment: returns }, afterCodeText.split('\n').map(x => x.trim()).filter(Boolean));
     }
 
     private static _parseFunction(code: string): TFunctionSignature {

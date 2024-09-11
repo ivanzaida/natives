@@ -5,7 +5,7 @@ apiset: server
 ## GET_ALL_PEDS
 
 ```c
-object GET_ALL_PEDS();
+int[] GET_ALL_PEDS();
 ```
 
 Returns all peds handles known to the server.

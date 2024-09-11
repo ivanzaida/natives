@@ -6,7 +6,7 @@ game: gta5
 ## GET_ALL_ROPES
 
 ```c
-object GET_ALL_ROPES();
+int[] GET_ALL_ROPES();
 ```
 
 Returns all rope handles. The data returned adheres to the following layout:

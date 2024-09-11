@@ -100,9 +100,10 @@ export class CfxParser {
             const folder = path.join(this._outFolder, project);
             const srcFolder = path.join(folder, 'src');
             await FileUtils.mkdir(srcFolder);
+
             await Promise.all(funcs.map(async (func) => {
                 const content = func.compile();
-                await writeFile(path.join(folder, `${kebabCase(func.name)}.ts`), content);
+                await writeFile(path.join(srcFolder, `${kebabCase(func.name)}.ts`), content);
             }))
 
             const dtsFile = 'index.d.ts';
@@ -110,6 +111,7 @@ export class CfxParser {
             const pkgJson = buildPackageJson(project, [MODELS_PROJECT_NAME]);
             await writeFile(path.join(folder, dtsFile), buildFivemTypes(), 'utf-8');
             await writeFile(path.join(folder, 'package.json'), JSON.stringify(pkgJson, null, 2));
+            await writeFile(path.join(folder, 'tsconfig.json'), JSON.stringify(tsConfig, null, 2));
         }
 
         await Promise.all([
@@ -126,10 +128,17 @@ export class CfxParser {
             throw new Error(`Failed to parse function from ${file}`);
         }
 
-        const returnType = TypeResolver.getType(func.returnType);
+        let funcReturnType = func.returnType;
+        const isArray = funcReturnType.endsWith('[]');
+
+        if (isArray) {
+            funcReturnType = funcReturnType.substring(0, funcReturnType.length - 2);
+        }
+
+        let returnType = TypeResolver.getType(funcReturnType);
 
         if (!returnType) {
-            throw new Error(`Failed to parse ${func.returnType} from ${file}`);
+            throw new Error(`Failed to parse ${funcReturnType} from ${file}`);
         }
 
         const params: TFuncParam[] = func.params.map(param => {
@@ -173,12 +182,12 @@ export class CfxParser {
             throw new Error(`Failed to parse project name from ${file}`);
         }
 
-        return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, returnType, []);
+        return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, { ...returnType, name: '', isArray }, []);
     }
 
     private static _parseFunction(code: string): TFunctionSignature {
         // Regular expression to capture return type, function name, and parameters
-        const regex = /([\w\s\*]+)\s+(\w+)\s*\((.*)\);/;
+        const regex = /([\w\s\*\[\]]+)\s+(\w+)\s*\(([^)]*)\);/;
         const match = code.match(regex);
 
         if (match) {

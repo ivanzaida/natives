@@ -5,7 +5,7 @@ apiset: server
 ## GET_ALL_VEHICLES
 
 ```c
-object GET_ALL_VEHICLES();
+int[] GET_ALL_VEHICLES();
 ```
 
 Returns all vehicle handles known to the server.

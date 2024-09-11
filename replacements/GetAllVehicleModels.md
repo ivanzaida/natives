@@ -6,7 +6,7 @@ game: gta5
 ## GET_ALL_VEHICLE_MODELS
 
 ```c
-object GET_ALL_VEHICLE_MODELS();
+string[] GET_ALL_VEHICLE_MODELS();
 ```
 
 Returns all registered vehicle model names, including non-dlc vehicles and custom vehicles in no particular order.

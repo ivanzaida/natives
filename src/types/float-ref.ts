@@ -1,4 +1,4 @@
-export class FloatPtr {
+export class FloatRef {
     public readonly dataView: DataView;
     
     constructor() {
@@ -9,8 +9,8 @@ export class FloatPtr {
         return this.dataView.getFloat32(0, true);
     }
 
-    public static fromValue(value: number): FloatPtr {
-        const ptr = new FloatPtr();
+    public static fromValue(value: number): FloatRef {
+        const ptr = new FloatRef();
         ptr.dataView.setFloat32(0, value, true);
         return ptr;
     }

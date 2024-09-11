@@ -112,9 +112,9 @@ export class Struct {
             case 'TEXT_LABEL_23'.toLowerCase():
             case 'TEXT_LABEL_31'.toLowerCase():
             case 'TEXT_LABEL_63'.toLowerCase():
-                return `new StringPtr(new DataView(this.dataView.buffer.slice(${offset}, ${size - 1}))).value`;
+                return `new ${TypeResolver.getType('string*')!.runtimeName}(new DataView(this.dataView.buffer.slice(${offset}, ${size - 1}))).value`;
             case 'vector'.toLowerCase():
-                return `new Vector3(this.dataView.getFloat32(${offset}, true), this.dataView.getFloat32(${offset + 8}, true), this.dataView.getFloat32(${offset + 16}, true))`;
+                return `new ${TypeResolver.getType('vector')!.runtimeName}(this.dataView.getFloat32(${offset}, true), this.dataView.getFloat32(${offset + 8}, true), this.dataView.getFloat32(${offset + 16}, true))`;
             default:
                 throw new Error(`Unknown type: ${type}`);
         }

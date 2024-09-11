@@ -21,13 +21,13 @@ const buildModels = async (outFolder: string) => {
     FileUtils.setReplacement('native-db/enums/APPLY_FORCE_TYPE.md', 'replacements/APPLY_FORCE_TYPE.md')
 
     TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector3.ts', folder: 'types', nativeName: 'vector', runtimeName: 'Vector3' }, 24);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'int-ptr.ts', folder: 'types', nativeName: 'int*', runtimeName: 'IntPtr' }, 8);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'float-ptr.ts', folder: 'types', nativeName: 'float*', runtimeName: 'FloatPtr' }, 8);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'string-ptr.ts', folder: 'types', nativeName: 'string*', runtimeName: 'StringPtr' }, 0);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'bool-ptr.ts', folder: 'types', nativeName: 'bool*', runtimeName: 'BoolPtr' }, 8);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ptr.ts', folder: 'types', nativeName: 'VectorPtr', runtimeName: 'VectorPtr' }, 0);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ptr.ts', folder: 'types', nativeName: 'Vector3*', runtimeName: 'VectorPtr' }, 0);
-    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ptr.ts', folder: 'types', nativeName: 'Vector3', runtimeName: 'VectorPtr' }, 0);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'int-ref.ts', folder: 'types', nativeName: 'int*', runtimeName: 'IntRef' }, 8);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'float-ref.ts', folder: 'types', nativeName: 'float*', runtimeName: 'FloatRef' }, 8);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'string-ref.ts', folder: 'types', nativeName: 'string*', runtimeName: 'StringRef' }, 0);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'bool-ref.ts', folder: 'types', nativeName: 'bool*', runtimeName: 'BoolRef' }, 8);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ref.ts', folder: 'types', nativeName: 'Vector3Ref', runtimeName: 'Vector3Ref' }, 0);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ref.ts', folder: 'types', nativeName: 'Vector3*', runtimeName: 'Vector3Ref' }, 0);
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'vector-ref.ts', folder: 'types', nativeName: 'Vector3', runtimeName: 'Vector3Ref' }, 0);
 
     const modelsOutFolder = path.join(outFolder, MODELS_PROJECT_NAME);
     const modelsSrc = path.join(modelsOutFolder, 'src');
@@ -49,13 +49,12 @@ const buildModels = async (outFolder: string) => {
     const index = folders.map((folder) => `export * from './${folder}';`).join('\n');
     await writeFile(`${modelsSrc}/index.ts`, index);
 
-
-    // const packageJson = buildPackageJson(MODELS_PROJECT_NAME);
-    // const tsConfig = buildTsConfig();
-    // await writeFile(`${modelsOutFolder}/package.json`, JSON.stringify(packageJson, null, 2));
-    // await writeFile(`${modelsOutFolder}/tsconfig.json`, tsConfig);
-    // execSync('yarn install', { cwd: modelsOutFolder, stdio: 'inherit' });
-    // execSync('yarn build', { cwd: modelsOutFolder, stdio: 'inherit' });
+    const packageJson = buildPackageJson(MODELS_PROJECT_NAME);
+    const tsConfig = buildTsConfig();
+    await writeFile(`${modelsOutFolder}/package.json`, JSON.stringify(packageJson, null, 2));
+    await writeFile(`${modelsOutFolder}/tsconfig.json`, tsConfig);
+    execSync('yarn install', { cwd: modelsOutFolder, stdio: 'inherit' });
+    execSync('yarn build', { cwd: modelsOutFolder, stdio: 'inherit' });
 }
 
 const buildNatives = async (outFolder: string) => {
@@ -66,22 +65,23 @@ const buildNatives = async (outFolder: string) => {
     const nativeParser = new NativeParser(`native-db/${FUNCTIONS_FOLDER}`, nativesSrc);
     await nativeParser.parse();
 
-    // const packageJson = buildPackageJson(NATIVES_PROJECT_NAME, [MODELS_PROJECT_NAME]);
-    // const dtsFile = 'index.d.ts';
-    // const tsConfig = buildTsConfig([dtsFile]);
-    // await writeFile(path.join(nativesOutFolder, dtsFile), buildFivemTypes(), 'utf-8');
-    // await writeFile(path.join(nativesOutFolder, 'package.json'), JSON.stringify(packageJson, null, 2));
-    // await writeFile(path.join(nativesOutFolder, 'tsconfig.json'), tsConfig);
+    const packageJson = buildPackageJson(NATIVES_PROJECT_NAME, [MODELS_PROJECT_NAME]);
+    const dtsFile = 'index.d.ts';
+    const tsConfig = buildTsConfig([dtsFile]);
+    await writeFile(path.join(nativesOutFolder, dtsFile), buildFivemTypes(), 'utf-8');
+    await writeFile(path.join(nativesOutFolder, 'package.json'), JSON.stringify(packageJson, null, 2));
+    await writeFile(path.join(nativesOutFolder, 'tsconfig.json'), tsConfig);
 
-    // execSync('yarn install', { cwd: nativesOutFolder, stdio: 'inherit' });
-    // execSync('yarn build', { cwd: nativesOutFolder, stdio: 'inherit' });
+    execSync('yarn install', { cwd: nativesOutFolder, stdio: 'inherit' });
+    execSync('yarn build', { cwd: nativesOutFolder, stdio: 'inherit' });
 }
 
 const main = async () => {
     const outFolder = 'out';
-
     await rmdir(outFolder, { recursive: true }).catch(() => { });
     await mkdir(outFolder, { recursive: true });
+    await writeFile(path.join(outFolder, 'package.json'), JSON.stringify(buildMonorepoPackageJson([NATIVES_PROJECT_NAME, MODELS_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_CLIENT_PROJECT_NAME, CFX_SHARED_PROJECT_NAME]), null, 2), 'utf-8');
+
     await buildModels(outFolder);
     await buildNatives(outFolder);
 
@@ -111,6 +111,30 @@ const main = async () => {
     TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'http-handler.ts', folder: 'types', nativeName: 'HttpHandler', runtimeName: 'HttpHandler' }, 8);
 
     FileUtils.setReplacement('native-decls/server/ScanResourceRoot.md', 'replacements/ScanResourceRoot.md')
+
+    FileUtils.setReplacement('native-decls/DoorSystemGetActive.md', 'replacements/DoorSystemGetActive.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'door-system-active-door.ts', folder: 'types', nativeName: 'DoorSystemActiveDoor', runtimeName: 'DoorSystemActiveDoor' }, 8);
+
+    FileUtils.setReplacement('native-decls/GetActivePlayers.md', 'replacements/GetActivePlayers.md')
+    FileUtils.setReplacement('native-decls/GetAllObjects.md', 'replacements/GetAllObjects.md')
+    FileUtils.setReplacement('native-decls/GetAllPeds.md', 'replacements/GetAllPeds.md')
+    FileUtils.setReplacement('native-decls/GetAllRopes.md', 'replacements/GetAllRopes.md')
+    FileUtils.setReplacement('native-decls/GetAllVehicleModels.md', 'replacements/GetAllVehicleModels.md')
+    FileUtils.setReplacement('native-decls/GetAllVehicles.md', 'replacements/GetAllVehicles.md')
+
+    FileUtils.setReplacement('native-decls/GetGamePool.md', 'replacements/GetGamePool.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'pool-name.enum.ts', folder: 'types', nativeName: 'ePoolName', runtimeName: 'EPoolName' }, 8);
+
+    FileUtils.setReplacement('native-decls/GetPedDecorations.md', 'replacements/GetPedDecorations.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'ped-decoration.ts', folder: 'types', nativeName: 'PedDecoration', runtimeName: 'PedDecoration' }, 8);
+
+    FileUtils.setReplacement('native-decls/GetRegisteredCommands.md', 'replacements/GetRegisteredCommands.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'registered-command.ts', folder: 'types', nativeName: 'RegisteredCommand', runtimeName: 'RegisteredCommand' }, 8);
+
+    FileUtils.setReplacement('native-decls/GetStateBagKeys.md', 'replacements/GetStateBagKeys.md')
+    FileUtils.setReplacement('native-decls/GetStateBagValue.md', 'replacements/GetStateBagValue.md')
+    FileUtils.setReplacement('native-decls/PerformHttpRequestInternalEx.md', 'replacements/PerformHttpRequestInternalEx.md')
+    FileUtils.setReplacement('native-decls/sdk/UpdateMapdataEntity.md', 'replacements/UpdateMapdataEntity.md')
 
     const registerTypeAlias = (source: string, nativeName: string, runtimeName = nativeName) => {
         const type = TypeResolver.getType(source);
@@ -145,7 +169,6 @@ const main = async () => {
     const cfxParser = new CfxParser(`native-decls`, `${outFolder}`);
     await cfxParser.parse();
 
-    await writeFile(path.join(outFolder, 'package.json'), JSON.stringify(buildMonorepoPackageJson([NATIVES_PROJECT_NAME, MODELS_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_CLIENT_PROJECT_NAME, CFX_SHARED_PROJECT_NAME]), null, 2), 'utf-8');
 
 }
 

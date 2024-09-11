@@ -27,7 +27,6 @@ export abstract class TypeResolver {
         ['DATAFILE_ARRAY'.toLowerCase(), 'string[]'],
         ['UNKNOWN'.toLowerCase(), 'unknown'],
         ['STRUCT'.toLowerCase(), 'DataView'],
-        ['object', 'any'],
         ['any', 'any'],
         ['Function'.toLowerCase(), 'Function'],
     ]);

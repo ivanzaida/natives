@@ -39,7 +39,7 @@ export class NativeParser {
 
         const [namespace, name] = header.split('::').map(x => MdParser.removeTextStyle(x).trim());
         const paramsRaw = MdParser.parseSection('Parameters', content).split('\n').filter(Boolean);
-        const params : TFuncParam[] = paramsRaw
+        const params: TFuncParam[] = paramsRaw
             .map(x => {
                 let cleaned = MdParser.removeTextStyle(x);
                 if (cleaned.startsWith('* ')) {
@@ -77,7 +77,7 @@ export class NativeParser {
 
         const notes = MdParser.parseSection('Notes', content);
 
-        const model = new Native(NATIVES_PROJECT_NAME, this._outFolder, namespace, name, camelCase(name), Hash, params, type, notes.split('\n').filter(Boolean).filter(x => !x.startsWith('<!--')));
+        const model = new Native(NATIVES_PROJECT_NAME, this._outFolder, namespace, name, camelCase(name), Hash, params, { ...type, isArray: false, name: '' }, notes.split('\n').filter(Boolean).filter(x => !x.startsWith('<!--')));
 
         return model;
     }

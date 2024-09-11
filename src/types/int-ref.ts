@@ -1,4 +1,4 @@
-export class IntPtr {
+export class IntRef {
     public readonly dataView: DataView;
     
     constructor() {
@@ -9,8 +9,8 @@ export class IntPtr {
         return this.dataView.getInt32(0, true);
     }
 
-    public static fromValue(value: number): IntPtr {
-        const ptr = new IntPtr();
+    public static fromValue(value: number): IntRef {
+        const ptr = new IntRef();
         ptr.dataView.setInt32(0, value, true);
         return ptr;
     }

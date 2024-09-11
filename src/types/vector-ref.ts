@@ -1,6 +1,6 @@
 import { Vector3 } from "./vector3";
 
-export class VectorPtr {
+export class Vector3Ref {
     public readonly dataView = new DataView(new ArrayBuffer(24));
 
     public copyToVector(vector: Vector3): void {
@@ -9,8 +9,8 @@ export class VectorPtr {
         vector.z = this.dataView.getFloat32(16, true);
     }
 
-    public static fromVector(vector: Vector3): VectorPtr {
-        const ptr = new VectorPtr();
+    public static fromVector(vector: Vector3): Vector3Ref {
+        const ptr = new Vector3Ref();
         ptr.dataView.setFloat32(0, vector.x, true);
         ptr.dataView.setFloat32(8, vector.y, true);
         ptr.dataView.setFloat32(16, vector.z, true);

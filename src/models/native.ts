@@ -3,10 +3,10 @@ import { TypeResolver } from "../utils/type-resolver";
 import { TTypeInfo } from "./type-info";
 import { TStructField } from "../utils/md-parser";
 import { NATIVE_STRUCT_TYPE, NATIVE_UNKNOWN_TYPE, NATIVE_VECTOR_TYPE } from "../const";
-import { VectorPtr } from "../types";
+import { Vector3Ref } from "../types";
 
 export type TFuncParam = { field: TStructField, type: TTypeInfo };
-export type TFunReturnType = TTypeInfo & { name: string }
+export type TFunReturnType = TTypeInfo & { name: string, isArray: boolean };
 
 export class Native {
     public readonly currentFolder: string;
@@ -15,12 +15,12 @@ export class Native {
     public readonly nativeName: string;
     public readonly hash: string;
     public readonly parameters: TFuncParam[] = [];
-    public readonly returnType: TTypeInfo;
+    public readonly returnType: TFunReturnType;
     public readonly notes: string[] = [];
     public readonly currentProject: string;
 
 
-    constructor(currentProject: string, currentFolder: string, namespace: string, nativeName: string, name: string, hash: string, parameters: TFuncParam[], returnType: TTypeInfo, notes: string[]) {
+    constructor(currentProject: string, currentFolder: string, namespace: string, nativeName: string, name: string, hash: string, parameters: TFuncParam[], returnType: TFunReturnType, notes: string[]) {
         this.currentFolder = currentFolder;
         this.name = name;
         this.nativeName = nativeName;
@@ -61,7 +61,7 @@ export class Native {
                 compiledName += ' /* ptr */';
                 if (TypeResolver.isStruct(param.type.nativeName) || TypeResolver.isGenerated(param.type.nativeName)) {
                     if (param.type.nativeName === NATIVE_VECTOR_TYPE.toLocaleLowerCase()) {
-                        const vectorPtr = TypeResolver.getType(VectorPtr.name)!;
+                        const vectorPtr = TypeResolver.getType(Vector3Ref.name)!;
                         preRuns.push(`const ${paramName}Ptr = new ${vectorPtr.runtimeName}();`);
                         passParameters.push(`${paramName}Ptr.dataView`);
                         postRuns.push(`${paramName}Ptr.copyToVector(${paramName});`);
@@ -83,6 +83,11 @@ export class Native {
         });
 
         let returnType = this.returnType.runtimeName;
+
+        if (this.returnType.isArray) {
+            returnType += '[]';
+        }
+
         const returnsVector = this.returnType === TypeResolver.getType(NATIVE_VECTOR_TYPE);
 
         const funcName = this.name.startsWith('0x') ? `n_${this.name}` : this.name;
@@ -100,6 +105,11 @@ export class Native {
             returnTransformation = `Vector3.fromArray(${resultVar})`;
         }
 
+        if (this.returnType.isArray) {
+            passParameters.push('Citizen.resultAsObject()');
+        }
+
+      
 
         buffer.push(...preRuns.map(x => `\t${x}`));
         buffer.push(`\tconst ${resultVar} = Citizen.invokeNative<${returnSignature}>('${this.hash}', ${passParameters.join(', ')});`);
@@ -162,7 +172,10 @@ export class Native {
         const hasVector = parameters.some(x => x.type.nativeName === NATIVE_VECTOR_TYPE.toLowerCase());
 
         if (hasVector) {
-            const vecPtr = VectorPtr.name;
+            const vecPtr = Vector3Ref.name;
+            if (!TypeResolver.getType(vecPtr)) {
+                throw new Error(`Type ${vecPtr} not found`);
+            }
             const path = TypeResolver.resolveImport(this.currentProject, this.currentFolder, TypeResolver.getType(vecPtr)!)!;
             imports.push(`import { ${vecPtr} } from '${path}';`);
         }

@@ -1,4 +1,4 @@
-export class StringPtr {
+export class StringRef {
     public readonly dataView: DataView;
 
     public get value(): string {
@@ -22,7 +22,7 @@ export class StringPtr {
         this.dataView = dataView;
     }
 
-    public static fromValue(value: string): StringPtr {
+    public static fromValue(value: string): StringRef {
         const buffer = new ArrayBuffer(value.length + 1);
         const view = new DataView(buffer);
 
@@ -32,6 +32,6 @@ export class StringPtr {
 
         view.setUint8(value.length, 0);
 
-        return new StringPtr(view);
+        return new StringRef(view);
     }
 }

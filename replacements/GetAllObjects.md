@@ -5,7 +5,7 @@ apiset: server
 ## GET_ALL_OBJECTS
 
 ```c
-object GET_ALL_OBJECTS();
+int[] GET_ALL_OBJECTS();
 ```
 
 Returns all object handles known to the server.

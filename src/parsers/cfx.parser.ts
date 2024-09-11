@@ -2,11 +2,15 @@ import { log } from "console";
 import { glob } from "fast-glob";
 import { FileUtils } from "../utils/file-utils";
 import parseMD from "parse-md";
-import { Native, TFuncParam } from "../models/func";
+import { Native, TFuncParam } from "../models/native";
 import { MdParser } from "../utils/md-parser";
-import { camelCase, pascalCase } from "change-case";
+import { camelCase, kebabCase, pascalCase } from "change-case";
 import { joaat } from "../joaat";
 import { TypeResolver } from "../utils/type-resolver";
+import { CFX_CLIENT_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_SHARED_PROJECT_NAME, MODELS_PROJECT_NAME } from "../const";
+import { writeFile } from "fs/promises";
+import path from "path";
+import { buildFivemTypes, buildPackageJson, buildTsConfig } from "../utils/build-package";
 
 type TCfxMetadata = {
     ns: string;
@@ -36,13 +40,19 @@ export class CfxParser {
         const serverFunctions: Native[] = [];
         const clientFunctions: Native[] = [];
 
-        const games = new Set<string>();
-
         for (const file of files) {
             const fileContent = await FileUtils.readFile(file);
+
+            if (MdParser.removeTextStyle(fileContent) === 'FUNCTION_DELETED') {
+                log(`Skipping ${file} because it's deleted`);
+                continue
+            }
+
             const { metadata } = parseMD(fileContent) as { metadata: TCfxMetadata };
 
             if (metadata.game && metadata.game !== 'gta5') {
+                log(`Skipping ${file} because it's for ${metadata.game}`);
+                continue;
             }
 
             const code = MdParser.parseCode(fileContent);
@@ -54,54 +64,116 @@ export class CfxParser {
 
             name = MdParser.removeTextStyle(name);
 
-            if (TypeResolver.hasNative(name)) {
-                // log(`Skipping native ${name}`);
+            const isNative = TypeResolver.hasNative(name);
+
+            if (isNative) {
+                if (metadata.apiset !== 'server') {
+                    throw new Error(`Failed to parse ${file} because it's not a server native`);
+                }
+
+                const existingNative = TypeResolver.getNative(name);
+                const params = existingNative.parameters.map(param => {
+                    const field = { ...param.field, isPointer: false };
+                    param = { ...param, field };
+                    return param;
+                });
+                const serverNative = new Native(CFX_SERVER_PROJECT_NAME, this._inFolder, metadata.ns, existingNative.nativeName, existingNative.name, CfxParser._makeHashFromName(name), params, existingNative.returnType, existingNative.notes);
+                serverFunctions.push(serverNative);
                 continue;
             }
 
 
-            const func = code.map(CfxParser._parseFunction).filter(Boolean).find(x => x.functionName === name);
+            const native = this._parseNative(code, file, metadata, name);
 
-            if (!func) {
-                throw new Error(`Failed to parse function from ${file}`);
+            if (metadata.apiset === 'shared') {
+                sharedFunctions.push(native);
+            } else if (metadata.apiset === 'client') {
+                clientFunctions.push(native);
+            } else if (metadata.apiset === 'server') {
+                serverFunctions.push(native);
+            } else {
+                throw new Error(`Unknown apiset ${metadata.apiset}`);
             }
-
-            const returnType = TypeResolver.getType(func.returnType);
-
-            if (!returnType) {
-                throw new Error(`Failed to parse ${func.returnType} from ${file}`);
-            }
-
-            const params: TFuncParam[] = func.params.map(param => {
-                let field = MdParser.parseField(`${param.type} ${param.name}`);
-
-                if (field.type === "char" && field.isPointer) {
-                    field = { ...field, type: "string" };
-                }
-
-                let type = TypeResolver.getType(field.type);
-
-
-                if (!type) {
-                    throw new Error(`Failed to parse ${param.name}: ${param.type} from ${file}`);
-                }
-
-                const alias = TypeResolver.getAlias(field.type);
-
-                if (alias) {
-                    type = TypeResolver.getType(alias)!;
-                }
-
-                return { type, field };
-            })
-
-            const native = new Native(this._inFolder, metadata.ns, func.functionName, camelCase(name), '0x' + joaat(name).toString(16), params, returnType, []);
-
-         
-
         }
 
-        log(`Games: ${Array.from(games).join(', ')}`);
+        const writeNatives = async (project: string, funcs: Native[]): Promise<void> => {
+            const folder = path.join(this._outFolder, project);
+            const srcFolder = path.join(folder, 'src');
+            await FileUtils.mkdir(srcFolder);
+            await Promise.all(funcs.map(async (func) => {
+                const content = func.compile();
+                await writeFile(path.join(folder, `${kebabCase(func.name)}.ts`), content);
+            }))
+
+            const dtsFile = 'index.d.ts';
+            const tsConfig = buildTsConfig([dtsFile]);
+            const pkgJson = buildPackageJson(project, [MODELS_PROJECT_NAME]);
+            await writeFile(path.join(folder, dtsFile), buildFivemTypes(), 'utf-8');
+            await writeFile(path.join(folder, 'package.json'), JSON.stringify(pkgJson, null, 2));
+        }
+
+        await Promise.all([
+            writeNatives(CFX_SHARED_PROJECT_NAME, sharedFunctions),
+            writeNatives(CFX_CLIENT_PROJECT_NAME, clientFunctions),
+            writeNatives(CFX_SERVER_PROJECT_NAME, serverFunctions),
+        ]);
+    }
+
+    private _parseNative(code: string[], file: string, metadata: TCfxMetadata, name: string): Native {
+        const func = code.map(CfxParser._parseFunction).filter(Boolean).find(x => x.functionName === name);
+
+        if (!func) {
+            throw new Error(`Failed to parse function from ${file}`);
+        }
+
+        const returnType = TypeResolver.getType(func.returnType);
+
+        if (!returnType) {
+            throw new Error(`Failed to parse ${func.returnType} from ${file}`);
+        }
+
+        const params: TFuncParam[] = func.params.map(param => {
+            let field = MdParser.parseField(`${param.type} ${param.name}`);
+
+            if (field.type === "char" && field.isPointer) {
+                field.type = 'string';
+                field.isPointer = false;
+            }
+
+            let type = TypeResolver.getType(field.type);
+
+            if (!type) {
+                throw new Error(`Failed to parse ${param.name}: ${param.type} from ${file}`);
+            }
+
+            const alias = TypeResolver.getAlias(field.type);
+
+            if (alias) {
+                type = TypeResolver.getType(alias)!;
+            }
+
+            return { type, field };
+        })
+
+        let projectName: string = '';
+
+        if (metadata.apiset === 'client') {
+            projectName = CFX_CLIENT_PROJECT_NAME;
+        }
+
+        if (metadata.apiset === 'server') {
+            projectName = CFX_SERVER_PROJECT_NAME;
+        }
+
+        if (metadata.apiset === 'shared') {
+            projectName = CFX_CLIENT_PROJECT_NAME;
+        }
+
+        if (!projectName) {
+            throw new Error(`Failed to parse project name from ${file}`);
+        }
+
+        return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, returnType, []);
     }
 
     private static _parseFunction(code: string): TFunctionSignature {
@@ -130,5 +202,9 @@ export class CfxParser {
         } else {
             return null!;
         }
+    }
+
+    private static _makeHashFromName(name: string): string {
+        return ('0x' + joaat(name).toString(16)).toUpperCase();
     }
 }

@@ -6,7 +6,7 @@ import { TypedefsParser } from "./parsers/typedefs.parser";
 import path from "path";
 import { TypeResolver } from "./utils/type-resolver";
 import { FileUtils } from "./utils/file-utils";
-import { ENUMS_FOLDER, FUNCTIONS_FOLDER, MODELS_PROJECT_NAME, NATIVES_PROJECT_NAME, STRUCTS_FOLDER, TYPEDEFS_FOLDER } from "./const";
+import { CFX_CLIENT_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_SHARED_PROJECT_NAME, ENUMS_FOLDER, FUNCTIONS_FOLDER, MODELS_PROJECT_NAME, NATIVES_PROJECT_NAME, STRUCTS_FOLDER, TYPEDEFS_FOLDER } from "./const";
 import { CfxParser } from "./parsers/cfx.parser";
 import { buildFivemTypes, buildMonorepoPackageJson, buildPackageJson, buildTsConfig } from "./utils/build-package";
 import { execSync } from "child_process";
@@ -50,12 +50,12 @@ const buildModels = async (outFolder: string) => {
     await writeFile(`${modelsSrc}/index.ts`, index);
 
 
-    const packageJson = buildPackageJson(MODELS_PROJECT_NAME);
-    const tsConfig = buildTsConfig();
-    await writeFile(`${modelsOutFolder}/package.json`, JSON.stringify(packageJson, null, 2));
-    await writeFile(`${modelsOutFolder}/tsconfig.json`, tsConfig);
-    execSync('yarn install', { cwd: modelsOutFolder, stdio: 'inherit' });
-    execSync('yarn build', { cwd: modelsOutFolder, stdio: 'inherit' });
+    // const packageJson = buildPackageJson(MODELS_PROJECT_NAME);
+    // const tsConfig = buildTsConfig();
+    // await writeFile(`${modelsOutFolder}/package.json`, JSON.stringify(packageJson, null, 2));
+    // await writeFile(`${modelsOutFolder}/tsconfig.json`, tsConfig);
+    // execSync('yarn install', { cwd: modelsOutFolder, stdio: 'inherit' });
+    // execSync('yarn build', { cwd: modelsOutFolder, stdio: 'inherit' });
 }
 
 const buildNatives = async (outFolder: string) => {
@@ -66,15 +66,15 @@ const buildNatives = async (outFolder: string) => {
     const nativeParser = new NativeParser(`native-db/${FUNCTIONS_FOLDER}`, nativesSrc);
     await nativeParser.parse();
 
-    const packageJson = buildPackageJson(NATIVES_PROJECT_NAME, [MODELS_PROJECT_NAME]);
-    const dtsFile = 'index.d.ts';
-    const tsConfig = buildTsConfig([dtsFile]);
-    await writeFile(path.join(nativesOutFolder, dtsFile), buildFivemTypes(), 'utf-8');
-    await writeFile(path.join(`${nativesOutFolder}`, 'package.json'), JSON.stringify(packageJson, null, 2));
-    await writeFile(path.join(`${nativesOutFolder}`, 'tsconfig.json'), tsConfig);
+    // const packageJson = buildPackageJson(NATIVES_PROJECT_NAME, [MODELS_PROJECT_NAME]);
+    // const dtsFile = 'index.d.ts';
+    // const tsConfig = buildTsConfig([dtsFile]);
+    // await writeFile(path.join(nativesOutFolder, dtsFile), buildFivemTypes(), 'utf-8');
+    // await writeFile(path.join(nativesOutFolder, 'package.json'), JSON.stringify(packageJson, null, 2));
+    // await writeFile(path.join(nativesOutFolder, 'tsconfig.json'), tsConfig);
 
-    execSync('yarn install', { cwd: nativesOutFolder, stdio: 'inherit' });
-    execSync('yarn build', { cwd: nativesOutFolder, stdio: 'inherit' });
+    // execSync('yarn install', { cwd: nativesOutFolder, stdio: 'inherit' });
+    // execSync('yarn build', { cwd: nativesOutFolder, stdio: 'inherit' });
 }
 
 const main = async () => {
@@ -82,15 +82,35 @@ const main = async () => {
 
     await rmdir(outFolder, { recursive: true }).catch(() => { });
     await mkdir(outFolder, { recursive: true });
-    await writeFile(path.join(outFolder, 'package.json'), JSON.stringify(buildMonorepoPackageJson([NATIVES_PROJECT_NAME, MODELS_PROJECT_NAME]), null, 2), 'utf-8');
     await buildModels(outFolder);
     await buildNatives(outFolder);
 
-    return;
+    FileUtils.setReplacement('native-decls/AddStateBagChangeHandler.md', 'replacements/AddStateBagChangeHandler.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'state-bag-change-handler.ts', folder: 'types', nativeName: 'StateBagChangeHandler', runtimeName: 'StateBagChangeHandler' }, 8);
 
-    const folders = await readdir(outFolder);
-    const index = folders.map((folder) => `export * from './${folder}';`).join('\n');
-    await writeFile(`${outFolder}/index.ts`, index);
+    FileUtils.setReplacement('native-decls/RegisterArchetypes.md', 'replacements/RegisterArchetypes.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'archetypes-factory.ts', folder: 'types', nativeName: 'ArchetypesFactory', runtimeName: 'ArchetypesFactory' }, 8);
+    
+    FileUtils.setReplacement('native-decls/RegisterCommand.md', 'replacements/RegisterCommand.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'command-handler.ts', folder: 'types', nativeName: 'CommandHandler', runtimeName: 'CommandHandler' }, 8);
+
+    FileUtils.setReplacement('native-decls/RegisterConsoleListener.md', 'replacements/RegisterConsoleListener.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'console-listener.ts', folder: 'types', nativeName: 'ConsoleListener', runtimeName: 'ConsoleListener' }, 8);
+    
+    FileUtils.setReplacement('native-decls/RegisterEntities.md', 'replacements/RegisterEntities.md')
+
+    FileUtils.setReplacement('native-decls/RegisterNuiCallback.md', 'replacements/RegisterNuiCallback.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'nui-callback.ts', folder: 'types', nativeName: 'NuiCallback', runtimeName: 'NuiCallback' }, 8);
+
+    FileUtils.setReplacement('native-decls/RegisterRawNuiCallback.md', 'replacements/RegisterRawNuiCallback.md')
+
+    FileUtils.setReplacement('native-decls/RegisterResourceBuildTaskFactory.md', 'replacements/RegisterResourceBuildTaskFactory.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'resource-build-task-factory.ts', folder: 'types', nativeName: 'ResourceBuildTaskFactory', runtimeName: 'ResourceBuildTaskFactory' }, 8);
+
+    FileUtils.setReplacement('native-decls/SetHttpHandler.md', 'replacements/SetHttpHandler.md')
+    TypeResolver.addType({ project: MODELS_PROJECT_NAME, fileName: 'http-handler.ts', folder: 'types', nativeName: 'HttpHandler', runtimeName: 'HttpHandler' }, 8);
+
+    FileUtils.setReplacement('native-decls/server/ScanResourceRoot.md', 'replacements/ScanResourceRoot.md')
 
     const registerTypeAlias = (source: string, nativeName: string, runtimeName = nativeName) => {
         const type = TypeResolver.getType(source);
@@ -121,8 +141,12 @@ const main = async () => {
     registerTypeAlias('BLIP_INDEX', 'Blip*')
     registerTypeAlias('Any', 'Any*')
 
-    const cfxParser = new CfxParser(`native-decls`, `${outFolder}/cfx`);
+
+    const cfxParser = new CfxParser(`native-decls`, `${outFolder}`);
     await cfxParser.parse();
+
+    await writeFile(path.join(outFolder, 'package.json'), JSON.stringify(buildMonorepoPackageJson([NATIVES_PROJECT_NAME, MODELS_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_CLIENT_PROJECT_NAME, CFX_SHARED_PROJECT_NAME]), null, 2), 'utf-8');
+
 }
 
 main();

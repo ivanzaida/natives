@@ -1,7 +1,7 @@
 import { log } from "console";
 import { TTypeInfo } from "../models/type-info";
 import { ENUMS_FOLDER, STRING_PTR_TYPE, STRUCTS_FOLDER, TYPEDEFS_FOLDER } from "../const";
-import { Native } from "../models/func";
+import { Native } from "../models/native";
 import { buildProjectPath } from "./build-package";
 
 export abstract class TypeResolver {
@@ -29,7 +29,7 @@ export abstract class TypeResolver {
         ['STRUCT'.toLowerCase(), 'DataView'],
         ['object', 'any'],
         ['any', 'any'],
-        ['func', 'Function'],
+        ['Function'.toLowerCase(), 'Function'],
     ]);
 
     private static readonly _stringTypes = new Set<string>([
@@ -158,13 +158,13 @@ export abstract class TypeResolver {
         return t?.folder === 'types';
     }
 
-    private static _natives = new Map<string, string>();
+    private static _natives = new Map<string, Native>();
 
     public static addNative(native: Native): void {
-        this._natives.set(native.nativeName, native.getSignature());
+        this._natives.set(native.nativeName, native);
     }
 
-    public static getNativeSignature(name: string): string {
+    public static getNative(name: string): Native {
         return this._natives.get(name)!;
     }
 

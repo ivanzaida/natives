@@ -8,4 +8,12 @@ export class VectorPtr {
         vector.y = this.dataView.getFloat32(8, true);
         vector.z = this.dataView.getFloat32(16, true);
     }
+
+    public static fromVector(vector: Vector3): VectorPtr {
+        const ptr = new VectorPtr();
+        ptr.dataView.setFloat32(0, vector.x, true);
+        ptr.dataView.setFloat32(8, vector.y, true);
+        ptr.dataView.setFloat32(16, vector.z, true);
+        return ptr;
+    }
 }

@@ -21,4 +21,17 @@ export class StringPtr {
     constructor(dataView: DataView) {
         this.dataView = dataView;
     }
+
+    public static fromValue(value: string): StringPtr {
+        const buffer = new ArrayBuffer(value.length + 1);
+        const view = new DataView(buffer);
+
+        for (let i = 0; i < value.length; i++) {
+            view.setUint8(i, value.charCodeAt(i));
+        }
+
+        view.setUint8(value.length, 0);
+
+        return new StringPtr(view);
+    }
 }

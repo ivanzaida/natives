@@ -1,7 +1,8 @@
 import { log } from "console";
-import { readFile } from "fs/promises";
+import { mkdir, readFile, rmdir } from "fs/promises";
 
 export abstract class FileUtils {
+
     private static _replacements = new Map<string, string>();
 
     public static setReplacement(source: string, replacement: string): void {
@@ -14,5 +15,10 @@ export abstract class FileUtils {
             path = this._replacements.get(path)!;
         }
         return readFile(path, 'utf-8');
+    }
+
+    public static async mkdir(folder: string): Promise<void> {
+        await rmdir(folder, { recursive: true }).catch(() => { });
+        await mkdir(folder, { recursive: true });
     }
 }

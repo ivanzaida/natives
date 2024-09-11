@@ -1,6 +1,6 @@
 import { mkdir, readdir, readFile, rmdir, writeFile } from "fs/promises";
 import path from "path";
-import { Native, TFuncParam } from "../models/func";
+import { Native, TFuncParam } from "../models/native";
 import { camelCase, kebabCase } from "change-case";
 import { MdParser } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";

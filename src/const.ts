@@ -11,5 +11,8 @@ export const TYPEDEFS_FOLDER = 'typedefs';
 
 export const MODELS_PROJECT_NAME = 'fivem-native-models';
 export const NATIVES_PROJECT_NAME = 'fivem-native-functions';
+export const CFX_SHARED_PROJECT_NAME = 'fivem-shared-functions';
+export const CFX_CLIENT_PROJECT_NAME = 'fivem-client-functions';
+export const CFX_SERVER_PROJECT_NAME = 'fivem-server-functions';
 
 export const RELEASING_ORG = '@ivanzaida'

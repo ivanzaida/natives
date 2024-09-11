@@ -79,10 +79,6 @@ export class Native {
                 compiledName += ` = ${param.field.defaultValue}`;
             }
 
-            if (param.field.comment) {
-                compiledName += ` /* ${param.field.comment} */`;
-            }
-
             acceptingParameters.push(compiledName);
         });
 

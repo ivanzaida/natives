@@ -8,4 +8,10 @@ export class IntPtr {
     public get value(): number {
         return this.dataView.getInt32(0, true);
     }
+
+    public static fromValue(value: number): IntPtr {
+        const ptr = new IntPtr();
+        ptr.dataView.setInt32(0, value, true);
+        return ptr;
+    }
 }

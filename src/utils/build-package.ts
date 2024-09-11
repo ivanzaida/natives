@@ -31,8 +31,8 @@ export const buildPackageJson = (name: string, localDeps: string[] = []): Object
     return packageJson;
 }
 
-export const buildTsConfig = (types: string[] = []) => {
-    return JSON.stringify({
+export const buildTsConfig = (types: string[] = []): any => {
+    return {
         "compilerOptions": {
             "lib": ["ES6", "ES2021"],
             "downlevelIteration": true,
@@ -54,7 +54,7 @@ export const buildTsConfig = (types: string[] = []) => {
             "typeRoots": types
         },
         "exclude": ["node_modules"]
-    }, null, 2)
+    }
 }
 
 

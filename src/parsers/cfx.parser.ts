@@ -11,6 +11,7 @@ import { CFX_CLIENT_PROJECT_NAME, CFX_SERVER_PROJECT_NAME, CFX_SHARED_PROJECT_NA
 import { writeFile } from "fs/promises";
 import path from "path";
 import { buildFivemTypes, buildPackageJson, buildTsConfig } from "../utils/build-package";
+import { execSync } from "child_process";
 
 type TCfxMetadata = {
     ns: string;
@@ -106,6 +107,8 @@ export class CfxParser {
                 await writeFile(path.join(srcFolder, `${kebabCase(func.name)}.ts`), content);
             }))
 
+
+
             const dtsFile = 'index.d.ts';
             const tsConfig = buildTsConfig([dtsFile]);
             const pkgJson = buildPackageJson(project, [MODELS_PROJECT_NAME]);
@@ -135,10 +138,18 @@ export class CfxParser {
             funcReturnType = funcReturnType.substring(0, funcReturnType.length - 2);
         }
 
+        
+
         let returnType = TypeResolver.getType(funcReturnType);
 
         if (!returnType) {
             throw new Error(`Failed to parse ${funcReturnType} from ${file}`);
+        }
+
+        const retAlias = TypeResolver.getAlias(funcReturnType);
+
+        if (retAlias) {
+            returnType = TypeResolver.getType(retAlias)!;
         }
 
         const params: TFuncParam[] = func.params.map(param => {
@@ -160,6 +171,8 @@ export class CfxParser {
             if (alias) {
                 type = TypeResolver.getType(alias)!;
             }
+
+        
 
             return { type, field };
         })

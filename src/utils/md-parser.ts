@@ -46,38 +46,38 @@ export abstract class MdParser {
         return fieldsText;
     }
 
-    public static parseList<T extends {[key: string]: string}>(text: string): T[] {
+    public static parseList<T extends { [key: string]: string }>(text: string): T[] {
         const lines = text.split('\n');
         const result: T[] = [];
-        
+
         let headers: string[] = [];
-      
+
         for (const line of lines) {
-          // Check if the line is a header row
-          if (line.startsWith('|') && line.includes('---')) {
-            continue;
-          }
-      
-          // Parse header row
-          if (line.startsWith('|') && !headers.length) {
-            headers = line.split('|').map(header => header.trim()).filter(Boolean);
-            continue;
-          }
-      
-          // Parse data rows
-          if (line.startsWith('|')) {
-            const values = line.split('|').map(value => value.trim()).filter(Boolean);
-      
-            if (values.length === headers.length) {
-              const row: T = {}  as T;
-              for (let i = 0; i < headers.length; i++) {
-                const key = headers[i];
-                const value = values[i];
-                Object.defineProperty(row, key, { value, enumerable: true });
-              }
-              result.push(row);
+            // Check if the line is a header row
+            if (line.startsWith('|') && line.includes('---')) {
+                continue;
             }
-          }
+
+            // Parse header row
+            if (line.startsWith('|') && !headers.length) {
+                headers = line.split('|').map(header => header.trim()).filter(Boolean);
+                continue;
+            }
+
+            // Parse data rows
+            if (line.startsWith('|')) {
+                const values = line.split('|').map(value => value.trim()).filter(Boolean);
+
+                if (values.length === headers.length) {
+                    const row: T = {} as T;
+                    for (let i = 0; i < headers.length; i++) {
+                        const key = headers[i];
+                        const value = values[i];
+                        Object.defineProperty(row, key, { value, enumerable: true });
+                    }
+                    result.push(row);
+                }
+            }
         }
         return result;
     }
@@ -100,7 +100,7 @@ export abstract class MdParser {
             }
             comment = comment?.trim();
         }
-        
+
         const isPointer = type.endsWith('\*');
 
         if (isPointer) {
@@ -125,6 +125,18 @@ export abstract class MdParser {
             offset: 0,
             isPointer,
             defaultValue,
+        }
+    }
+
+    public static parseCode(text: string): string[] {
+        // Regular expression to match C code blocks
+        const cCodeBlocks = text.match(/```c([\s\S]*?)```/g);
+
+        if (cCodeBlocks) {
+            // Remove the "```c" and "```" surrounding the code block
+            return cCodeBlocks.map(block => block.replace(/```c|```/g, '').trim());
+        } else {
+            return [];
         }
     }
 }

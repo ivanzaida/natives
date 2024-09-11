@@ -5,7 +5,7 @@ import { Struct } from "../models/struct";
 import { MdParser, TStructField } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 import path from "path";
-import { STRUCTS_FOLDER } from "../const";
+import { MODELS_PROJECT_NAME, STRUCTS_FOLDER } from "../const";
 
 export class StructParser {
     private readonly _inFolder: string;
@@ -50,7 +50,8 @@ export class StructParser {
                 nativeName: struct.nativeName,
                 runtimeName: struct.name,
                 fileName,
-                folder: STRUCTS_FOLDER
+                folder: STRUCTS_FOLDER,
+                project: MODELS_PROJECT_NAME
             }, struct.size)
             fileNames.push(fileName);
         }

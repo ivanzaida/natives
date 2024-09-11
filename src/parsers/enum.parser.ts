@@ -6,11 +6,10 @@ import { EnumModel, TEnumField } from "../models/enum";
 import { TypeResolver } from "../utils/type-resolver";
 import { log } from "console";
 import path from "path";
-import { ENUMS_FOLDER, INT_TYPE } from "../const";
+import { ENUMS_FOLDER, INT_TYPE, MODELS_PROJECT_NAME } from "../const";
 import { FileUtils } from "../utils/file-utils";
 
 export class EnumParser {
-
     private readonly _inFolder: string;
     private readonly _outFolder: string;
 
@@ -31,21 +30,21 @@ export class EnumParser {
         await mkdir(path.resolve(this._outFolder), { recursive: true });
         const fileNames: string[] = [];
 
-        for (const file of files) {
-            const nativeName = file.replace('.md', '');
+        await Promise.all(files.map(async (file) => {
             const name = this._cleanupName(file);
             const content = await FileUtils.readFile(`${this._inFolder}/${file}`);
             const model = this.parseEnum(file.replace('.md', ''), name, content);
             const int = TypeResolver.getType('int')!;
             TypeResolver.addType({
                 ...int, nativeName: model.nativeName, runtimeName: model.runtimeName,
+                project: MODELS_PROJECT_NAME,
                 folder: ENUMS_FOLDER,
             }, TypeResolver.getTypeSize('int')!);
 
             const fileName = kebabCase(name).replace('e-', '') + '.enum.ts';
             await writeFile(`${this._outFolder}/${fileName}`, model.compile(), 'utf-8');
             fileNames.push(fileName);
-        }
+        }));
 
         const index = fileNames.map(x => `export * from './${x.replace('.ts', '')}';`).join('\n');
         await writeFile(`${this._outFolder}/index.ts`, index, 'utf-8');

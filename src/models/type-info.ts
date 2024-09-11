@@ -6,4 +6,5 @@ type TNativeType = {
 export type TTypeInfo = TNativeType & {
     fileName: string;
     folder: string;
+    project: string;
 }

@@ -1,6 +1,8 @@
 import { log } from "console";
 import { TTypeInfo } from "../models/type-info";
 import { ENUMS_FOLDER, STRING_PTR_TYPE, STRUCTS_FOLDER, TYPEDEFS_FOLDER } from "../const";
+import { Native } from "../models/func";
+import { buildProjectPath } from "./build-package";
 
 export abstract class TypeResolver {
     private static readonly _aliases = new Map<string, string>();
@@ -8,10 +10,12 @@ export abstract class TypeResolver {
     private static readonly _primitives = new Map<string, string>([
         ['int', 'number'],
         ['float', 'number'],
+        ['long', 'number'],
         ['string', 'string'],
         ['void', 'void'],
         ['bool', 'boolean'],
         ['char*', 'string'],
+        ['hash', 'number'],
         ['TEXT_LABEL_23'.toLowerCase(), 'string'],
         ['TEXT_LABEL_31'.toLowerCase(), 'string'],
         ['TEXT_LABEL_63'.toLowerCase(), 'string'],
@@ -23,6 +27,9 @@ export abstract class TypeResolver {
         ['DATAFILE_ARRAY'.toLowerCase(), 'string[]'],
         ['UNKNOWN'.toLowerCase(), 'unknown'],
         ['STRUCT'.toLowerCase(), 'DataView'],
+        ['object', 'any'],
+        ['any', 'any'],
+        ['func', 'Function'],
     ]);
 
     private static readonly _stringTypes = new Set<string>([
@@ -56,8 +63,7 @@ export abstract class TypeResolver {
         ['VECTOR'.toLowerCase(), 24]
     ]);
 
-    private static readonly _generatedTypes = new Map<string, TTypeInfo>([
-    ]);
+    private static readonly _generatedTypes = new Map<string, TTypeInfo>([]);
 
     public static isPrimitiveType(nativeType: string): boolean {
         return this._primitives.has(nativeType.trim().toLowerCase());
@@ -70,7 +76,7 @@ export abstract class TypeResolver {
     public static getType(name: string): TTypeInfo | undefined {
         const lowerName = name.toLowerCase();
         if (this._primitives.has(lowerName)) {
-            return { nativeName: name, fileName: '', folder: '', runtimeName: this._primitives.get(lowerName)! };
+            return { project: '', nativeName: name, fileName: '', folder: '', runtimeName: this._primitives.get(lowerName)! };
         }
         return this._generatedTypes.get(lowerName);
     }
@@ -95,12 +101,12 @@ export abstract class TypeResolver {
         return resolved?.folder === TYPEDEFS_FOLDER;
     }
 
-    public static resolveImports(currFolder: string, rawTypes: string[]): string[] {
+    public static resolveImports(currProject: string, currFolder: string, rawTypes: string[]): string[] {
         const types = rawTypes.map(t => this.getType(t)).filter(Boolean) as TTypeInfo[];
         const imports = new Map<string, Set<string>>();
 
         for (const type of types) {
-            const key = this.resolveImport(currFolder, type)!;
+            const key = this.resolveImport(currProject, currFolder, type)!;
 
             if (!key) {
                 continue;
@@ -122,10 +128,16 @@ export abstract class TypeResolver {
         return buffer;
     }
 
-    public static resolveImport(currFolder: string, type: TTypeInfo): string | null {
+    public static resolveImport(currProject: string, currFolder: string, type: TTypeInfo): string | null {
         if (!type.folder) {
             return null;
         }
+
+
+        if (currProject !== type.project) {
+            return buildProjectPath(type.project);
+        }
+
         return type.folder === currFolder ? `./${type.fileName.replace('.ts', '')}` : `../${type.folder}/${type.fileName.replace('.ts', '')}`;
     }
 
@@ -140,9 +152,24 @@ export abstract class TypeResolver {
     public static isStringType(type: string): boolean {
         return this._stringTypes.has(type.trim().toLowerCase());
     }
-    
+
     public static isGenerated(type: string): boolean {
         const t = this.getType(type);
         return t?.folder === 'types';
     }
+
+    private static _natives = new Map<string, string>();
+
+    public static addNative(native: Native): void {
+        this._natives.set(native.nativeName, native.getSignature());
+    }
+
+    public static getNativeSignature(name: string): string {
+        return this._natives.get(name)!;
+    }
+
+    public static hasNative(name: string): boolean {
+        return this._natives.has(name);
+    }
+
 }

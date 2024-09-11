@@ -17,8 +17,10 @@ export class Native {
     public readonly parameters: TFuncParam[] = [];
     public readonly returnType: TTypeInfo;
     public readonly notes: string[] = [];
+    public readonly currentProject: string;
 
-    constructor(currentFolder: string, namespace: string, nativeName: string, name: string, hash: string, parameters: TFuncParam[], returnType: TTypeInfo, notes: string[]) {
+
+    constructor(currentProject: string, currentFolder: string, namespace: string, nativeName: string, name: string, hash: string, parameters: TFuncParam[], returnType: TTypeInfo, notes: string[]) {
         this.currentFolder = currentFolder;
         this.name = name;
         this.nativeName = nativeName;
@@ -27,6 +29,13 @@ export class Native {
         this.returnType = returnType;
         this.namespace = namespace;
         this.notes = notes;
+        this.currentProject = currentProject;
+    }
+
+    public getSignature(): string {
+        const params = this._getRealParams().map((x, i) => `field_${i}` + ': ' + x.type.runtimeName);
+        const returnType = this.returnType.runtimeName;
+        return `function ${this.name}(${params.join(', ')}): ${returnType}`;
     }
 
     public compile(): string {
@@ -91,13 +100,13 @@ export class Native {
 
         if (returnsVector) {
             returnSignature = '[number, number, number]';
-            passParameters.push('resultAsVector()');
+            passParameters.push('Citizen.resultAsVector()');
             returnTransformation = `Vector3.fromArray(${resultVar})`;
         }
 
 
         buffer.push(...preRuns.map(x => `\t${x}`));
-        buffer.push(`\tconst ${resultVar} = invokeNative<${returnSignature}>('${this.hash}', ${passParameters.join(', ')});`);
+        buffer.push(`\tconst ${resultVar} = Citizen.invokeNative<${returnSignature}>('${this.hash}', ${passParameters.join(', ')});`);
         buffer.push(...postRuns.map(x => `\t${x}`));
         if (returnTransformation) {
             buffer.push(`\treturn ${returnTransformation};`);
@@ -124,7 +133,7 @@ export class Native {
                 commentsBuffer.push(note);
             });
         }
-        
+
 
         commentsBuffer.push('');
         commentsBuffer.push('------------------------------------------------------------------');
@@ -145,7 +154,7 @@ export class Native {
             comment = comment.replace(/\*/g, '');
             buffer.push(` * ${comment}`);
         })
-      
+
         if (this.returnType.runtimeName !== 'void') {
             buffer.push(` * @returns {${this.returnType.runtimeName}} result`);
         }
@@ -153,18 +162,12 @@ export class Native {
     }
 
     private _resolveImports(buffer: string[], parameters: TFuncParam[]): void {
-        const imports = TypeResolver.resolveImports(this.currentFolder, parameters.map(x => x.type).concat(this.returnType).map(x => x.nativeName));
-        const returnsVector = this.returnType === TypeResolver.getType(NATIVE_VECTOR_TYPE);
-        if (returnsVector) {
-            imports.push(`import { invokeNative, resultAsVector } from '../types/invoke-native';`);
-        } else {
-            imports.push(`import { invokeNative } from '../types/invoke-native';`);
-        }
+        const imports = TypeResolver.resolveImports(this.currentProject, this.currentFolder, parameters.map(x => x.type).concat(this.returnType).map(x => x.nativeName));
         const hasVector = parameters.some(x => x.type.nativeName === NATIVE_VECTOR_TYPE.toLowerCase());
 
         if (hasVector) {
             const vecPtr = VectorPtr.name;
-            const path = TypeResolver.resolveImport(this.currentFolder, TypeResolver.getType(vecPtr)!)!;
+            const path = TypeResolver.resolveImport(this.currentProject, this.currentFolder, TypeResolver.getType(vecPtr)!)!;
             imports.push(`import { ${vecPtr} } from '${path}';`);
         }
 

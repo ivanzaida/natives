@@ -8,3 +8,8 @@ export const STRUCTS_FOLDER = 'structs';
 export const ENUMS_FOLDER = 'enums';
 export const FUNCTIONS_FOLDER = 'functions';
 export const TYPEDEFS_FOLDER = 'typedefs';
+
+export const MODELS_PROJECT_NAME = 'fivem-native-models';
+export const NATIVES_PROJECT_NAME = 'fivem-native-functions';
+
+export const RELEASING_ORG = '@ivanzaida'

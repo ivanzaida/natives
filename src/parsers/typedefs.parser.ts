@@ -4,7 +4,7 @@ import { MdParser } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
 import path from "path";
 import { log } from "console";
-import { TYPEDEFS_FOLDER } from "../const";
+import { MODELS_PROJECT_NAME, TYPEDEFS_FOLDER } from "../const";
 
 export class TypedefsParser {
     private readonly _inFolder: string;
@@ -21,7 +21,7 @@ export class TypedefsParser {
         await mkdir(path.resolve(this._outFolder), { recursive: true });
         const fileNames: string[] = [];
 
-        for (const file of files) {
+        await Promise.all(files.map(async (file) => {
             const nativeName = file.replace('.md', '');
             const runtimeName = pascalCase(nativeName);
             const content = await readFile(`${this._inFolder}/${file}`, 'utf-8');
@@ -39,6 +39,7 @@ export class TypedefsParser {
                 ...resolved, nativeName, runtimeName,
                 fileName,
                 folder: TYPEDEFS_FOLDER,
+                project: MODELS_PROJECT_NAME
             }, TypeResolver.getTypeSize(type)!);
             
             TypeResolver.addAlias(nativeName, type);
@@ -46,7 +47,7 @@ export class TypedefsParser {
 
             await writeFile(`${this._outFolder}/${fileName}`, `export type ${runtimeName} = ${resolved.runtimeName};`, 'utf-8');
             fileNames.push(fileName);
-        }
+        }));
 
         const index = fileNames.map(x => `export * from './${x.replace('.ts', '')}';`).join('\n');
         await writeFile(`${this._outFolder}/index.ts`, index, 'utf-8');

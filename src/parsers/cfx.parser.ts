@@ -67,6 +67,7 @@ export class CfxParser {
             name = MdParser.removeTextStyle(name);
             const isNative = TypeResolver.hasNative(name);
 
+            const native = this._parseNative(code, file, fileContent, metadata, name);
 
             if (isNative) {
                 if (metadata.apiset !== 'server') {
@@ -74,17 +75,11 @@ export class CfxParser {
                 }
 
                 const existingNative = TypeResolver.getNative(name);
-                const params = existingNative.parameters.map(param => {
-                    const field = { ...param.field, isPointer: false };
-                    param = { ...param, field };
-                    return param;
-                });
-                const serverNative = new Native(CFX_SERVER_PROJECT_NAME, this._inFolder, metadata.ns, existingNative.nativeName, existingNative.name, CfxParser._makeHashFromName(name), params, existingNative.returnType, existingNative.notes);
+                const serverNative = new Native(CFX_SERVER_PROJECT_NAME, this._inFolder, metadata.ns, existingNative.nativeName, existingNative.name, CfxParser._makeHashFromName(name), native.parameters, existingNative.returnType, existingNative.notes);
                 serverFunctions.push(serverNative);
                 continue;
             }
 
-            const native = this._parseNative(code, file, fileContent, metadata, name);
 
             if (metadata.apiset === 'shared') {
                 sharedFunctions.push(native);

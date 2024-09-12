@@ -123,6 +123,8 @@ const parseCfx = async (outFolder: string) => {
     FileUtils.setReplacement('native-decls/GetStateBagValue.md', 'replacements/GetStateBagValue.md')
     FileUtils.setReplacement('native-decls/PerformHttpRequestInternalEx.md', 'replacements/PerformHttpRequestInternalEx.md')
     FileUtils.setReplacement('native-decls/sdk/UpdateMapdataEntity.md', 'replacements/UpdateMapdataEntity.md')
+    
+    FileUtils.setReplacement('native-decls/DoesEntityExist.md', 'replacements/DoesEntityExist.md')
 
     const registerTypeAlias = (source: string, nativeName: string, runtimeName = nativeName) => {
         const type = TypeResolver.getType(source);

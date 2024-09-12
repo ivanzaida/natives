@@ -161,13 +161,13 @@ export class CfxParser {
             }
         }
 
-       
+
 
         if (!func) {
             throw new Error(`Failed to parse function from ${file}`);
         }
 
-    
+
 
         let funcReturnType = func.returnType;
         const isArray = funcReturnType.endsWith('[]');
@@ -247,7 +247,7 @@ export class CfxParser {
         const returns = MdParser.parseSection('Return value', fileContent).trim();
 
         if (func.functionName === 'CREATE_RUNTIME_TEXTURE') {
-            log({returns});
+            log({ returns });
         }
 
         return new Native(projectName, this._inFolder, metadata.ns, func.functionName, camelCase(name), CfxParser._makeHashFromName(name), params, { ...returnType, name: '', isArray, comment: returns }, afterCodeText.split('\n').map(x => x.trim()).filter(Boolean));
@@ -282,6 +282,6 @@ export class CfxParser {
     }
 
     private static _makeHashFromName(name: string): string {
-        return ('0x' + joaat(name).toString(16)).toUpperCase();
+        return '0x' + joaat(name).toString(16).toUpperCase();
     }
 }

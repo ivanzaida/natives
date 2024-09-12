@@ -156,10 +156,8 @@ export class Native {
             commentsBuffer.push(fieldText);
         });
 
-        commentsBuffer.forEach(comment => {
-            comment = comment.replace(/\*/g, '');
-            buffer.push(` * ${comment}`);
-        })
+      
+        buffer.push(commentsBuffer.map(x => ` * ${x.replace(/\*/g, '')}`).join('\n\r'));
 
         if (this.returnType.runtimeName !== 'void') {
             const name = this.returnType.name ?? 'returnValue';

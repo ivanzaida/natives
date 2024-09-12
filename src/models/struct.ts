@@ -1,3 +1,4 @@
+import { camelCase } from "change-case";
 import { MODELS_PROJECT_NAME, STRING_PTR_TYPE, STRUCTS_FOLDER } from "../const";
 import { TStructField } from "../utils/md-parser";
 import { TypeResolver } from "../utils/type-resolver";
@@ -55,10 +56,10 @@ export class Struct {
             const typeSize = TypeResolver.getTypeSize(field.type)!;
 
 
-            let name = field.name;
+            let name = camelCase(field.name);
             if (presentFields.includes(field.name)) {
                 const count = presentFields.filter(f => f === field.name).length;
-                name = `${field.name}${count + 1}`;
+                name = `${name}${count + 1}`;
             }
             presentFields.push(field.name);
 
